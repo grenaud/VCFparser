@@ -6,8 +6,14 @@ CXXFLAGS = -lm -O3 -lz -I${LIBGAB} -I${LIBTABIX}  -c
 LDFLAGS  = -lz
 
 
-all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o
+all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable 
 
+mergeBAMTable.o:	mergeBAMTable.cpp
+	${CXX} ${CXXFLAGS} mergeBAMTable.cpp
+
+
+mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 ReadTabix.o:	ReadTabix.cpp
 	${CXX} ${CXXFLAGS} $^
@@ -32,11 +38,11 @@ FilterVCF.o:	FilterVCF.cpp
 	${CXX} ${CXXFLAGS} FilterVCF.cpp
 
 testVCF:	testVCF.o ${LIBGAB}utils.o SimpleVCF.o FilterVCF.o BAMTableObj.o
-	${CXX} $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 testReadTabix:	testReadTabix.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o 
-	${CXX} $(LDFLAGS) -o $@ $^ $(LDLIBS)
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f  testReadTabix ReadTabix.o SimpleVCF.o testReadTabix.o VCFreader.o FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o
+	rm -f  testReadTabix ReadTabix.o SimpleVCF.o testReadTabix.o VCFreader.o FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable.o mergeBAMTable
 

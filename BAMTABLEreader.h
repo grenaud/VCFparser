@@ -18,10 +18,10 @@
 
 using namespace std;
 
-//! This class is to read a simple VCF (not multi individuals)
+//! This class is to read a BAMTable output
 /*!
  *
- *  This class will read VCF data and flag those within a certain 
+ *  This class will read BAMTable data and flag those within a certain 
  *  range (ex: 5bp) as close to an indel.
  *
  *
@@ -64,7 +64,6 @@ private:
     int readAhead;
     list<BAMTableObj> queueOfBTOs;
 
-
     bool needToPopulateQueue;
     bool fullQueue;
     bool endQueue;
@@ -103,7 +102,7 @@ public:
   \param file : Full path of the vcf file
   \param indelsAhead : Mark this many positions around an indel to flag them as close to indel
 */
-    BAMTABLEreader(string file,int indelsAhead);
+    BAMTABLEreader(string file,int indelsAhead=5);
 
 
 
@@ -119,6 +118,19 @@ public:
   \sa getData
 */
     bool hasData();
+
+    
+//! To reposition the tabix iterator
+/*!
+ *
+ * This subroutine repositions the tabix iterator if it was opened using tabix (on the same file)
+ * for a diverent file or change the number of indels, call the constructor again
+
+  \param chrName : Chromosome name
+  \param start : Start coordinate 
+  \param end : end coordinate 
+*/
+    void repositionIterator(string chrName,int start,int end);
 
 //! To retrieve the data from the next line
 /*!

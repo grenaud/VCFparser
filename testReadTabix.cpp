@@ -22,39 +22,41 @@ using namespace std;
 int main (int argc, char *argv[]) {
 
 
+    if(0){
 
     ReadTabix rt ("/mnt/454/Altaiensis/users/gabriel/EPOindices/chr13.epo.gz",
     		  "/mnt/454/Altaiensis/users/gabriel/EPOindices/chr13.epo.gz.tbi",
     		  "13",
 		  1,
 		  30001);
+    rt.repositionIterator("13",20000,30001);
     string buffer;//=new string();
     bool lineLeftEPO = rt.readLine(buffer);
+
+
     while(lineLeftEPO){
     	cout<<"buffer "<<buffer<<endl;
 	lineLeftEPO = rt.readLine(buffer);
     }
 
-    return 0;
-    
-    if(0){
 
-    ReadTabix rt ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
+
+    // return 0;
+    ReadTabix rt2 ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
     		  "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
     		  "10",
     		  75060,
     		  75070);
-    string buffer;//=new string();
-    while(rt.readLine(buffer)){
-    	cout<<"buffer "<<buffer<<endl;
-    	SimpleVCF svcf (buffer);
+    string buffer2;//=new string();
+    while(rt2.readLine(buffer2)){
+    	cout<<"buffer2 "<<buffer2<<endl;
+    	SimpleVCF svcf (buffer2);
     	cout<<svcf.getAlt()<<endl;
     	cout<<svcf.getInfoField<float>("MQ")<<endl;
     	cout<<svcf.getPLHomoRef()<<endl;
     }
-    }    
     
-    if(0){
+    
     VCFreader vcfr ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
     		    "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
     		    "10",
@@ -75,13 +77,6 @@ int main (int argc, char *argv[]) {
 	    toprint->hasAtLeastOneT()<<"\t"<<endl;
 
     }
-    }
-
-
-
-
-    if(0){
-
 
 
     VCFreader vcfr2 (string(argv[1]),
@@ -95,10 +90,10 @@ int main (int argc, char *argv[]) {
     	SimpleVCF * toprint=vcfr2.getData();
     	cout<<*toprint<<"\t"<<toprint->containsIndel()<<"\t"<<toprint->getCloseIndel()<<endl;
     }
+    
+
     }
-
-
-
+    
     BAMTABLEreader btr ("/mnt/expressions/susanna/Denisova_Molar_2_L9133/divergence_estimate/files_without_coverage_higher_than_2/L9133_merged_qc_uniq_ALL_l35q37_clipped_map1_notri_2cov.chr10.bed.gz",
     			"/mnt/expressions/susanna/Denisova_Molar_2_L9133/divergence_estimate/files_without_coverage_higher_than_2/L9133_merged_qc_uniq_ALL_l35q37_clipped_map1_notri_2cov.chr10.bed.gz.tbi",
     			"10",
@@ -110,7 +105,7 @@ int main (int argc, char *argv[]) {
     			//			164127,
     			//164240);
 
-    
+    btr.repositionIterator("10",936600,996845);
 
     while(btr.hasData()){
     	BAMTableObj * toprint=btr.getData();
@@ -119,6 +114,9 @@ int main (int argc, char *argv[]) {
     	// cout<<*toprint<<"\t"<<toprint->getRandomAllele()<<"\t"<<boolStringify(toprint->isCpg())<<"\t"<<toprint->hasAtLeastOneA()<<endl;
     }
 
+
+
+    
     if(0){
 
     AlleleInfoReader * alr = new BAMTABLEreader  ("/mnt/expressions/susanna/Denisova_Molar_2_L9133/divergence_estimate/files_without_coverage_higher_than_2/L9133_merged_qc_uniq_ALL_l35q37_clipped_map1_notri_2cov.chr10.bed.gz",
@@ -130,8 +128,9 @@ int main (int argc, char *argv[]) {
     cout<<"#############"<<endl;
      while(alr->hasData()){
 	 AlleleInfo	  * toprint=alr->getData();
-	 cout<<*toprint<<"\t"<<toprint->getRandomAllele()<<endl;
+	 cout<<*toprint<<endl;
     }
+
     }
     return 0;
 }

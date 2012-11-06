@@ -8,9 +8,10 @@
 #include "VCFreader.h"
 
 
-VCFreader::VCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead=5){
+VCFreader::VCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead){
     readAhead=indelsAhead;
     rt =new ReadTabix (file,indexForFile,chrName,start,end);
+
     needToPopulateQueue=true;
     fullQueue          =false;
     endQueue            =false;
@@ -67,10 +68,38 @@ VCFreader::~VCFreader(){
     }
     if(textMode)
 	vcfFile.close();
+    queueOfVCFs.clear();
 
     delete svcfToReturn;
 }
 
+void VCFreader::repositionIterator(string chrName,int start,int end){
+
+    if(!tabixMode){
+	cerr<<"The subroutine repositionIterator can only be called on objects constructed using tabix " <<endl;
+	exit(1);	
+    }
+
+
+    //re-initializing variables
+    needToPopulateQueue=true;
+    fullQueue          =false;
+    endQueue            =false;
+    numberOfTimesHasDataWasCalled=0;
+
+    delete svcfToReturn;
+    svcfToReturn=0;
+
+    
+    indexInQueueOfIndels=-1;
+    indexOfLastIndel=0;
+    previouslyFoundIndel=false;
+
+    queueOfVCFs.clear();
+
+    rt->repositionIterator(chrName,start,end);
+
+}
 
 bool VCFreader::getNextLine(){
     if(tabixMode){
@@ -185,10 +214,15 @@ SimpleVCF * VCFreader::getData(){
 	//}
 
     //SimpleVCF svcf =queueOfVCFs.front();
+
     svcfToReturn =new SimpleVCF(queueOfVCFs.front());
+    // cout<<&(queueOfVCFs.front())<<endl;
+    // cout<<svcfToReturn<<endl;
+    //delete svcfToReturn;
     queueOfVCFs.pop_front();
 
-    
+
+
     //look ahead   
     if(indexInQueueOfIndels == 0){//last element that is to be return is an indel
 	svcfToReturn->setCloseIndel(true);

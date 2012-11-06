@@ -20,17 +20,19 @@ allele data.
 */
 class AlleleInfo{
 
-private:
+ private:
     bool isCpg_;
-public:
+ protected: //derived classes can have access
+    int typeOfData; //1 = vcf, 2 = bamtable
+ public:
     AlleleInfo(){
 	isCpg_=false;    
     }
     virtual ~AlleleInfo() {   //cout<<"DESTRUCTOR AlleleInfo"<<endl;     
     };
-    virtual unsigned int getPosition() =0;
-    virtual string getChr() =0;
-    virtual char getRandomAllele() =0;
+    virtual unsigned int getPosition() const =0;
+    virtual string       getChr() const =0;
+    virtual char         getRandomAllele() const =0;
     /* virtual ostream& operator<<(ostream& os) =0; */
 
     virtual void print(ostream& os) const = 0 ;
@@ -39,6 +41,7 @@ public:
     virtual bool hasAtLeastOneC() const = 0 ;
     virtual bool hasAtLeastOneG() const = 0 ;
     virtual bool hasAtLeastOneT() const = 0 ;
+    virtual bool hasAllele(int indexAlle)      const = 0 ;
 
 
     /* ostream& operator<< (ostream& out, const AlleleInfo& al) ; */

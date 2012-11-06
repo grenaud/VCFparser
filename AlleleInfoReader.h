@@ -30,7 +30,8 @@ public:
     virtual bool hasData() =0 ;
     virtual AlleleInfo * getData() =0;
     /* virtual auto_ptr<AlleleInfo>  getData() =0; */
-
-
+    virtual  void repositionIterator(string chrName,int start,int end) =0;
+    
+    
 };
 #endif

@@ -92,26 +92,26 @@ public:
 
     ~SimpleVCF();
 //! Retrieves the reference allele as a string as it is in the raw VCF
-    string getRef();
+    string getRef() const;
 //! Retrieves the alternative allele(s) as a string as it is in the raw VCF
-    string getAlt();
+    string getAlt() const;
 //! Retrieves the alternative alleles as a vector of strings
-    vector<string> getAltAlleles();
+    vector<string> getAltAlleles() const;
 //! Retrieves the # of alternative alleles found
-    int getAltCount();
+    int getAltCount() const;
 
 
 //! Retrieves the potential associated ID
-    string getID();
+    string getID() const;
 //! Retrieves the chr
-    string getChr();
+    string getChr() const;
 //! Retrieves the position on the chr
-    unsigned int getPosition();
+    unsigned int getPosition() const;
 //! Retrieves the filter string 
-    string getFilter();
+    string getFilter() const;
 
 //! Retrieves the overall quality
-    float  getQual();
+    float  getQual() const;
 
 //! To check if one of the INFO fields exist
 /*!
@@ -121,9 +121,11 @@ public:
   \return  : returns true if field exists, false otherwise
   \sa  getInfoField()
 */
-    bool hasInfoField(string tag);
+    bool hasInfoField(string tag) const;
 
-    char getRandomAllele();
+    char getRandomAllele() const;
+    char getRandomAlleleUsingPL(int minPLdiffind) const;
+
 
 //! To retrieve the information for one of the INFO fields 
 /*!
@@ -135,7 +137,7 @@ public:
   \sa  hasInfoField()
 */
     template <typename T>
-	T   getInfoField(string tag){
+	T   getInfoField(string tag) {
 
 	map<string,string>::iterator it=infoField.find(tag);
 	if(it == infoField.end()){
@@ -147,47 +149,47 @@ public:
     }
 
     //! Retrieves the info field
-    string getInfoField();
+    string getInfoField() const; 
 
     //! Retrieves the genotype
-    string getGenotype();
+    string getGenotype() const;
     //! Retrieves the genotype quality
-    float  getGenotypeQual();
+    float  getGenotypeQual() const;
     //! Retrieves the depth
-    int    getDepth();
+    int    getDepth() const;
     //! Retrieves the pl field
-    string getPL();
+    string getPL() const;
     //! Retrieves the homo ref likelihood from the pl field
-    int    getPLHomoRef();
+    int    getPLHomoRef() const;
     //! Retrieves the heterozygous likelihood from the pl field
-    int    getPLHetero();
+    int    getPLHetero() const;
     //! Retrieves the homo alt likelihood from the pl field
-    int    getPLHomoAlt();
+    int    getPLHomoAlt() const;
 
 
 
     //! Sets the close to indel flag
     void    setCloseIndel(bool closeIndel);
-    bool    getCloseIndel();
-    bool    containsIndel();
+    bool    getCloseIndel() const;
+    bool    containsIndel() const;
 
     //! true if the REF allele is A,C,G or T
-    bool    isResolvedSingleBasePairREF();
+    bool    isResolvedSingleBasePairREF() const;
     //! true if the ALT allele is A,C,G,T or .
-    bool    isResolvedSingleBasePairALT();
+    bool    isResolvedSingleBasePairALT() const;
    //! true if every ALT allele is A,C,G,T or .
-    bool    areAllAltResolvedSingleBasePair();
+    bool    areAllAltResolvedSingleBasePair() const;
 
     //! true if GT field is "./."
-    bool isUnresolvedGT(); 
+    bool isUnresolvedGT() const; 
     //! true if GT field is "0/0"
-    bool isHomozygousREF();  
+    bool isHomozygousREF() const;  
     //! true if GT field is "0/1"
-    bool isHeterozygous();   
+    bool isHeterozygous() const;   
     //! true if GT field is "1/1"
-    bool isHomozygousALT();
+    bool isHomozygousALT() const;
    //! true if GT field is "1/2"
-    bool isHeterozygousALT();
+    bool isHeterozygousALT() const;
 
     /* friend ostream& operator<<(ostream& os, const SimpleVCF& smvcf); */
     void print(ostream& os) const;
@@ -200,6 +202,13 @@ public:
     bool hasAtLeastOneG() const  ;
     //! true if the current record contains at least one T
     bool hasAtLeastOneT() const  ;
+    
+    
+    //returns true if this record has this allele (A:1,C:2,G:3,T:4)
+    bool hasAllele(int indexAlle) const;
+
+    //! returns the count of reference and alternative allele based on PL field
+    pair<int,int> returnLikelyAlleleCountForRefAlt(int minPLdiffind=50) const;
 
 };
 #endif

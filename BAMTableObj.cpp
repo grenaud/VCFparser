@@ -7,8 +7,21 @@
 
 #include "BAMTableObj.h"
 
+BAMTableObj::BAMTableObj(){
+    chrName="";
+    position=0;
+    totalAllelCount=0;
+
+    for(int i = 0;i<4;i++){
+	alleleCount.push_back( 0 );
+    }
+
+}
+
+
 BAMTableObj::BAMTableObj(string line){
     fields=allTokens(line,'\t');
+    typeOfData=1;
 
     if(fields.size() != 7){
 	cerr<<"BAMTableObj: line "<<line<<" does not have 7 fields"<<endl;
@@ -53,16 +66,16 @@ BAMTableObj::~BAMTableObj(){
 }
 
 
-unsigned int BAMTableObj::getPosition(){
+unsigned int BAMTableObj::getPosition() const{
     return position;
 }
 
-string BAMTableObj::getChr(){
+string BAMTableObj::getChr() const{
     return chrName;
 }
 
 //to implement
-char BAMTableObj::getRandomAllele(){
+char BAMTableObj::getRandomAllele() const{
     int randIndex=rand()%totalAllelCount;//returns a number between 0 and (totalAllelCount-1)
     for(int i = 0;i<4;i++){
 	randIndex-=alleleCount[i];// if we find the allele count in the 
@@ -129,3 +142,22 @@ bool BAMTableObj::hasAtLeastOneG() const  {
 bool BAMTableObj::hasAtLeastOneT() const  {
     return (alleleCount[3] >0);
 }
+
+
+bool BAMTableObj::hasAllele(int indexAlle) const{
+    return ( alleleCount[indexAlle-1] > 0 );
+}
+
+bool BAMTableObj::hasOnly2Alleles(int firstIndex,int secondIndex) const{    
+    for(int i=0;i<4;i++){	
+	if( (i==(firstIndex-1)) ||
+	    (i==(secondIndex-1))  )
+	    continue;
+    
+	if( alleleCount[i] > 0 )
+	    return false;
+    }
+    return true;
+}
+
+

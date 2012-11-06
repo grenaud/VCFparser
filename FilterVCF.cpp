@@ -30,25 +30,25 @@
  \param maxCovcutoff        The maximum coverage cutoff
  \param minMapabilitycutoff    The mapability score cutoff
  \param minMQcutoff            The cutoff for the root mean square of the mapability score above a certain cutoff
- \param minMQcutoff            The cutoff for the GQ field (genotype quality)
+ \param minGQcutoff            The cutoff for the GQ field (genotype quality)
  \return  : True if the SimpleVCF passes all the aforementioned checks
 */
 
-bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minQCcutoff){
+bool passedFilters(SimpleVCF * smvcf,int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minGQcutoff){
     /////////////////////////////////////////////////////////////////
     //           FILTERING INDELS AND UNDEFINED REF ALLELE         //
     /////////////////////////////////////////////////////////////////
 
 
-    bool notFoundNonindel=smvcf.containsIndel() ;
+    bool notFoundNonindel=smvcf->containsIndel() ;
 
     if(notFoundNonindel){ rejectIndel++;  //we don't want indels		
 	return false;
     }
 
-    if(!smvcf.isResolvedSingleBasePairREF()){ rejectREFValidREF++; 
+    if(!smvcf->isResolvedSingleBasePairREF()){ rejectREFValidREF++; 
 	return false; }  //REF al  
-    if(!smvcf.isResolvedSingleBasePairALT()){ rejectREFValidALT++; 
+    if(!smvcf->isResolvedSingleBasePairALT()){ rejectREFValidALT++; 
 	return false;  } //ALT al
 
 
@@ -61,7 +61,7 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 
     // - are in the 2.5% tails of the coverage distribution
-    int coverageREF=smvcf.getDepth();
+    int coverageREF=smvcf->getDepth();
 
     if(coverageREF < minCovcutoff ||
        coverageREF > maxCovcutoff ){
@@ -72,8 +72,8 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 
     // - have Map20 < 1
-    if(smvcf.hasInfoField("Map20")){
-	if(smvcf.getInfoField<double>("Map20") < minMapabilitycutoff){
+    if(smvcf->hasInfoField("Map20")){
+	if(smvcf->getInfoField<double>("Map20") < minMapabilitycutoff){
 	    rejectMap20++;
 	    return false;
 	}
@@ -85,7 +85,7 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 
     // - have MQ< 30
-    double minMQ=smvcf.getInfoField<double>("MQ");
+    double minMQ=smvcf->getInfoField<double>("MQ");
 		    
     if(minMQ < minMQcutoff){
 	rejectLOWMQ++;
@@ -94,10 +94,10 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 
     // - have GQ < 40
-    //float minQual =smvcf.getQual();
-    float minQual =smvcf.getGenotypeQual();
+    //float minQual =smvcf->getQual();
+    float minQual =smvcf->getGenotypeQual();
 					
-    if(minQual< minQCcutoff){
+    if(minQual< minGQcutoff){
 	rejectLOWQUAL++;
 	return false;
     }
@@ -106,7 +106,7 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 	    
     // - are ± 5bp of InDels
-    bool isCloseToIndel=(smvcf.getCloseIndel() );	    
+    bool isCloseToIndel=(smvcf->getCloseIndel() );	    
 
     if(isCloseToIndel){
 	rejectCloseIndels++;
@@ -115,7 +115,7 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 
     // - are flagged as SysErr
-    if(smvcf.hasInfoField("SysErr")){
+    if(smvcf->hasInfoField("SysErr")){
 	rejectSysERR++;
 	return false;
     }
@@ -123,7 +123,7 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 
 
     // - are flagged as RM (repeat masked)
-    if(smvcf.hasInfoField("RM")){
+    if(smvcf->hasInfoField("RM")){
 	rejectRM++;
 	return false;
     }
@@ -135,7 +135,7 @@ bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minM
 		    
 		    
     //rejecting unknown genotype (GT= ./.)
-    if(smvcf.isUnresolvedGT() ){ rejectREF_unknownGeno++; 
+    if(smvcf->isUnresolvedGT() ){ rejectREF_unknownGeno++; 
 	return false; }
 
 

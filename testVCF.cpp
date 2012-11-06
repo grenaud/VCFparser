@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "utils.h"
+#include "AlleleInfo.h"
 #include "SimpleVCF.h"
 #include "FilterVCF.h"
 
@@ -29,6 +30,10 @@ int main (int argc, char *argv[]) {
     BAMTableObj bo1 ("10	137643	137644	0	1	0	0");
     BAMTableObj bo2 ("10	94313	94314	0	1	0	0");
 
+    cout<<bo1<<endl;
+    cout<<bo2<<endl;
+    cout<<(bo1+bo1)<<endl;
+
     cout<<test.isHomozygousREF()<<endl;
     cout<<test.isHeterozygous()<<endl;
     cout<<test.isHomozygousALT()<<endl;
@@ -36,8 +41,8 @@ int main (int argc, char *argv[]) {
 
     //bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minQCcutoff);
 
-    cout<<boolStringify(passedFilters(test,0,100,1.0,20,20))<<endl;
-    cout<<boolStringify(passedFilters(test2,4,98,1.0,20,100))<<endl;
+    cout<<boolStringify(passedFilters(&test,  0, 100,1.0, 20,  20))<<endl;
+    cout<<boolStringify(passedFilters(&test2, 4 ,98, 1.0, 20, 100))<<endl;
     cout<<rejectFiltersTally()<<endl;
 
     cout<<"random = "<<test3.getRandomAllele()<<endl;

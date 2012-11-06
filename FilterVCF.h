@@ -22,7 +22,7 @@ static int rejectSysERR=0;
 static int rejectRM=0;
 static int rejectREF_unknownGeno=0;
 
-bool passedFilters(SimpleVCF smvcf,int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minQCcutoff);
+bool passedFilters(SimpleVCF * smvcf,int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minGQcutoff);
 string rejectFiltersTally();
 
 #endif

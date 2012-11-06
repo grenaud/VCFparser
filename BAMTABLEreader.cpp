@@ -27,7 +27,7 @@ BAMTABLEreader::BAMTABLEreader(string file,string indexForFile,string chrName,in
 
 
 
-BAMTABLEreader::BAMTABLEreader(string file,int indelsAhead=5){
+BAMTABLEreader::BAMTABLEreader(string file,int indelsAhead){
     readAhead=indelsAhead;
     numberOfTimesHasDataWasCalled=0;
     btoToReturn=0;
@@ -38,7 +38,6 @@ BAMTABLEreader::BAMTABLEreader(string file,int indelsAhead=5){
     }else{
 	cerr<<"Unable to open the file "<<file<<endl;
 	exit(1);
-
     }
 
     needToPopulateQueue =true;
@@ -54,18 +53,39 @@ BAMTABLEreader::BAMTABLEreader(string file,int indelsAhead=5){
 
 
 BAMTABLEreader::~BAMTABLEreader(){
-    //    cout<<"DESTRUCTOR VCF"<<endl;
+
     if(tabixMode)
 	delete rt; //calling the destructor
     if(textMode)
 	bmtblFile.close();
     //if( !(btoToReturn) ){
     // cout<<"DESTROYVCF"<<endl;
+    queueOfBTOs.clear();
     delete btoToReturn;
     //}
-
 }
 
+
+void BAMTABLEreader::repositionIterator(string chrName,int start,int end){
+    if(!tabixMode){
+	cerr<<"The subroutine repositionIterator can only be called on objects constructed using tabix " <<endl;
+	exit(1);	
+    }
+
+    //re-initializing variables
+    needToPopulateQueue=true;
+    fullQueue          =false;
+    endQueue            =false;
+    numberOfTimesHasDataWasCalled=0;
+
+    delete btoToReturn;
+    btoToReturn=0;
+
+    queueOfBTOs.clear();
+
+    rt->repositionIterator(chrName,start,end);    
+  
+}
 
 bool BAMTABLEreader::getNextLine(){
     if(tabixMode){
@@ -75,6 +95,7 @@ bool BAMTABLEreader::getNextLine(){
     if(textMode){
 	while(1){
 	    bool flag=getline(bmtblFile,currentline);
+
 	    if(!flag)
 		return false;	   
 	    if(currentline.length() > 0 && currentline[0] != '#')

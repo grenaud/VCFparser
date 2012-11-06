@@ -29,5 +29,6 @@ class ReadTabix{
     ReadTabix(string file,string indexForFile,string chrName,int start,int end);
     ~ReadTabix();
     bool readLine(string & line);
+    void repositionIterator(string chrName,int start,int end);
 };
 #endif

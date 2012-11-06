@@ -97,7 +97,7 @@ public:
   \param end : end coordinate 
   \param indelsAhead : Mark this many positions around an indel to flag them as close to indel
 */
-    VCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead);
+    VCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead=5);
 
 
 //! To retrieve the records for a simple uncompressed VCF file
@@ -113,6 +113,21 @@ public:
 
 
     ~VCFreader();
+
+
+
+//! To reposition the tabix iterator
+/*!
+ *
+ * This subroutine repositions the tabix iterator if it was opened using tabix (on the same file)
+ * for a diverent file or change the number of indels, call the constructor again
+
+  \param chrName : Chromosome name
+  \param start : Start coordinate 
+  \param end : end coordinate 
+*/
+    void repositionIterator(string chrName,int start,int end);
+
 
 
 //! To verify if there are still data to be read
