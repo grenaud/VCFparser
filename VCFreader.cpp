@@ -133,6 +133,7 @@ bool VCFreader::hasData(){
 		if(queueOfVCFs.size() != 0 ){
 		    flagCpG( &(queueOfVCFs.back()),&svcf);
 		}
+		//cout<<"Adding "<<svcf<<endl;
 		queueOfVCFs.push_back(svcf);
 
 		if(svcf.containsIndel()){

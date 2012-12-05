@@ -24,6 +24,10 @@ The constructor parses the line from the VCF and populates the fields.
 class SimpleVCF : public AlleleInfo{
 private:
   
+    vector<int> countA;
+    vector<int> countC;
+    vector<int> countG;
+    vector<int> countT;
 
     //Taken from http://www.broadinstitute.org/gatk/guide/topic?name=intro
     bool unresolvedGT;   //if GT == "./."
@@ -137,26 +141,28 @@ public:
   \sa  hasInfoField()
 */
     template <typename T>
-	T   getInfoField(string tag) {
-
-	map<string,string>::iterator it=infoField.find(tag);
+	T   getInfoField(string tag) const {
+	map<string,string>::const_iterator it=infoField.find(tag);
 	if(it == infoField.end()){
 	    return T();
 	}else{
 	    return destringify<T>(it->second);
 	}
-	
     }
 
-    //! Retrieves the info field
-    string getInfoField() const; 
+    //! Retrieves the raw info field, not parsed
+    string getInfoFieldRaw() const; 
 
     //! Retrieves the genotype
     string getGenotype() const;
     //! Retrieves the genotype quality
     float  getGenotypeQual() const;
-    //! Retrieves the depth
+    //! Retrieves the depth, 
     int    getDepth() const;
+    //! Retrieves the depth using the info field (all reads, not just the ones that pass quality)
+    int    getDepthInfo() const;
+
+
     //! Retrieves the pl field
     string getPL() const;
     //! Retrieves the homo ref likelihood from the pl field
@@ -209,6 +215,11 @@ public:
 
     //! returns the count of reference and alternative allele based on PL field
     pair<int,int> returnLikelyAlleleCountForRefAlt(int minPLdiffind=50) const;
+
+    int getADforA();
+    int getADforC();
+    int getADforG();
+    int getADforT();
 
 };
 #endif

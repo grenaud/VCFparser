@@ -27,7 +27,7 @@ SimpleVCF::SimpleVCF(string line){
 
     typeOfData=1;
 
-    // cout<<"SimpleVCF "<<line<<endl;
+    //cout<<"SimpleVCF "<<line<<endl;
     fields=allTokens(line,'\t');
 
 
@@ -78,6 +78,7 @@ SimpleVCF::SimpleVCF(string line){
     }
 
     for(int i=0;i<formatFieldNames.size();i++){
+	// cout<<"formatFieldNames["<<i<<"] "<<formatFieldNames[i]<<endl;
 	if(formatFieldNames[i] == "GT"){ 
 	    indexGenotype     =i; 
 	    formatFieldGT=                   formatFieldValues[i]; 
@@ -93,10 +94,11 @@ SimpleVCF::SimpleVCF(string line){
 		cerr<<"SimpleVCF: unable to determine genotype for line "<<line<<""<<endl;
 		exit(1);
 	    }
+	    continue;
 	}
 
-	if(formatFieldNames[i] == "GQ"){ indexGenotypeQual =i; formatFieldGQ=destringify<float>(formatFieldValues[i]);}
-	if(formatFieldNames[i] == "DP"){ indexDepth        =i; formatFieldDP=destringify<int>  (formatFieldValues[i]);}
+	if(formatFieldNames[i] == "GQ"){ indexGenotypeQual =i; formatFieldGQ=destringify<float>(formatFieldValues[i]); continue; }
+	if(formatFieldNames[i] == "DP"){ indexDepth        =i; formatFieldDP=destringify<int>  (formatFieldValues[i]); continue;}
 	if(formatFieldNames[i] == "PL"){ 
 	    indexPL        = i; 
 	    formatFieldPL  = formatFieldValues[i];
@@ -108,10 +110,51 @@ SimpleVCF::SimpleVCF(string line){
 	    formatFieldPLHomoRef =  destringify<int>(plfields[0]);
 	    formatFieldPLHetero  =  destringify<int>(plfields[1]);
 	    formatFieldPLHomoAlt =  destringify<int>(plfields[2]);
+	    continue;
 	}
+
+	if(formatFieldNames[i] == "A"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(int j=0;j<adfield.size();j++){
+		countA.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
+
+	if(formatFieldNames[i] == "C"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(int j=0;j<adfield.size();j++){
+		countC.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
+
+	if(formatFieldNames[i] == "G"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(int j=0;j<adfield.size();j++){
+		countG.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
+
+	if(formatFieldNames[i] == "T"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(int j=0;j<adfield.size();j++){
+		countT.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
+	    
+
+
     }
 
-    
+    // cout<<getADforA()<<endl;
+    // cout<<getADforC()<<endl;
+    // cout<<getADforG()<<endl;
+    // cout<<getADforT()<<endl;
+
+    // cout<<"end"<<endl;
 
 }
 
@@ -150,7 +193,7 @@ string  SimpleVCF::getFilter() const{
     return filter;
 }
 
-string SimpleVCF::getInfoField() const{
+string SimpleVCF::getInfoFieldRaw() const{
     return infoFieldRaw;
 }
 
@@ -158,6 +201,7 @@ string SimpleVCF::getInfoField() const{
 bool   SimpleVCF::hasInfoField(string tag) const{
     return (infoField.find(tag)  != infoField.end());
 }
+
 
 
 
@@ -185,6 +229,14 @@ int     SimpleVCF::getDepth() const{
     }else{
 	return -1;
     }
+}
+
+int     SimpleVCF::getDepthInfo() const{
+    if(hasInfoField("DP")){
+	int toReturn = getInfoField<int>("DP");
+	return toReturn;
+    }
+    return -1;
 }
 
 string  SimpleVCF::getPL() const{
@@ -358,7 +410,10 @@ bool SimpleVCF::hasAllele(int indexAlle) const  {
 
 
 pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) const{
-    
+
+    if(unresolvedGT) //unresolved, we cannot infer anything
+	return pair<int,int>(0,0);
+
     if ( (formatFieldPLHetero-formatFieldPLHomoRef) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHomoRef) >= minPLdiffind) {  //high likelihood of homo ref, produce 2 alleles ref
 	// refAlleles+=2;
 	// altAlleles+=0;
@@ -404,13 +459,19 @@ pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) cons
 
 char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
     
+    if(unresolvedGT)
+	return 'X'; //unresolved
+
     if ( (formatFieldPLHetero-formatFieldPLHomoRef) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHomoRef) >= minPLdiffind) {  //high likelihood of homo ref, produce 2 alleles ref
+	// cout<<position<<"\t"<<"2,0"<<endl;
 	return ref[0];
     } else{
 	if ((formatFieldPLHetero-formatFieldPLHomoAlt) >= minPLdiffind && (formatFieldPLHomoRef-formatFieldPLHomoAlt) >= minPLdiffind) {  //high likelihood of homo alt, produce 2 alleles alt
+	    // cout<<position<<"\t"<<"0,2"<<endl;
 	    return alt[0];
 	} else {
 	    if ((formatFieldPLHomoRef-formatFieldPLHetero) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHetero) >= minPLdiffind) { //high likelihood of hetero, produce 1 allele of each
+		// cout<<position<<"\t"<<"1,1"<<endl;
 		if(randomBool())
 		    return ref[0]; 
 		else
@@ -418,9 +479,11 @@ char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
 
 	    }else{
 		if ((formatFieldPLHomoRef-formatFieldPLHomoAlt) >= minPLdiffind && (formatFieldPLHetero-formatFieldPLHomoAlt) <minPLdiffind ) { //high likelihood of at least one alt, produce 1 allele alt 
+		    // cout<<position<<"\t"<<"0,1"<<endl;
 		    return alt[0];
 		}else{
 		    if ( (formatFieldPLHomoAlt-formatFieldPLHomoRef) >= minPLdiffind && (formatFieldPLHetero-formatFieldPLHomoRef) < minPLdiffind ) { // high likelihood of at least one ref, produce 1 allele ref
+			// cout<<position<<"\t"<<"1,0"<<endl;
 			return ref[0]; 
 		    }else{
 			return 'X'; //unresolved
@@ -430,3 +493,37 @@ char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
 	}
     }// end all cases
 }
+
+int SimpleVCF::getADforA(){
+    int toReturn=0;
+    for(int j=0;j<countA.size();j++){
+	toReturn+=countA[j];
+    }
+    return toReturn;
+}
+ 
+int SimpleVCF::getADforC(){
+    int toReturn=0;
+    for(int j=0;j<countC.size();j++){
+	toReturn+=countC[j];
+    }
+    return toReturn;
+}
+
+int SimpleVCF::getADforG(){
+    int toReturn=0;
+    for(int j=0;j<countG.size();j++){
+	toReturn+=countG[j];
+    }
+    return toReturn;
+}
+ 
+
+int SimpleVCF::getADforT(){
+    int toReturn=0;
+    for(int j=0;j<countT.size();j++){
+	toReturn+=countT[j];
+    }
+    return toReturn;
+}
+

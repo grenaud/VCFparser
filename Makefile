@@ -1,4 +1,4 @@
-CXX      = g++ -g #-pg
+CXX      = g++ -g -pg
 LIBGAB   = /home/gabriel_renaud/lib/
 LIBTABIX = /home/gabriel_renaud/Software/tabix-0.2.6/
 
@@ -6,13 +6,15 @@ CXXFLAGS = -lm -O3 -lz -I${LIBGAB} -I${LIBTABIX}  -c
 LDFLAGS  = -lz
 
 
-all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable 
+all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable filterVCF
 
 mergeBAMTable.o:	mergeBAMTable.cpp
 	${CXX} ${CXXFLAGS} mergeBAMTable.cpp
 
-
 mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+filterVCF:	filterVCF.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 ReadTabix.o:	ReadTabix.cpp
@@ -44,5 +46,5 @@ testReadTabix:	testReadTabix.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabi
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f  testReadTabix ReadTabix.o SimpleVCF.o testReadTabix.o VCFreader.o FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable.o mergeBAMTable
+	rm -f  testReadTabix ReadTabix.o SimpleVCF.o testReadTabix.o VCFreader.o FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable.o mergeBAMTable filterVCF.o filterVCF
 
