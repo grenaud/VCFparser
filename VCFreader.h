@@ -62,7 +62,7 @@ private:
     ReadTabix * rt;
     string currentline;
     int readAhead;
-    list<SimpleVCF> queueOfVCFs;
+    list<SimpleVCF *> queueOfVCFs;
     int indexInQueueOfIndels; //this is the index of the last element of the list that is an insert, -1 if none
 
     //data of last indel found
@@ -80,7 +80,7 @@ private:
     ifstream vcfFile; //for text mode
     inline bool getNextLine();
     SimpleVCF * svcfToReturn;
-    inline bool flagCpG(SimpleVCF * previous,SimpleVCF * current);
+    inline void flagCpG(SimpleVCF * previous,SimpleVCF * current);
 
 public:
 

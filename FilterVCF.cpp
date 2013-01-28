@@ -8,6 +8,19 @@
 #include "FilterVCF.h"
 
 
+
+static int rejectIndel=0;
+static int rejectREFValidREF=0;
+static int rejectREFValidALT=0;
+static int rejectLOWCOV_REF=0;
+static int rejectMap20=0;
+static int rejectLOWMQ=0;
+static int rejectLOWQUAL=0;
+static int rejectCloseIndels=0;
+static int rejectSysERR=0;
+static int rejectRM=0;
+static int rejectREF_unknownGeno=0;
+
 //! To check whether a SimpleVCF passes the some filters
 /*!
  *
@@ -18,14 +31,14 @@
  *  2) Has A,C,G,T or . as alternative allele
  *  3) Has sequence coverage (depth) between two given values
  *  4) If the Map20 field is present, if checks if it is above a given cutoff
- *  5) Has the root mean square of the mapability score above a certain cutoff
+ *  5) Has the root mean square of the mapping quality score above a certain cutoff
  *  6) Has GQ field above a certain cutoff
  *  7) If not flagged as close to indel
  *  8) If not flagged as  syserr (systematic error)
  *  9) If not flagged as rm (repeat masked)\
  * 10) If the genotype is unknown (GT field = ./.)
  *
- \param smvcf               The SimpleVCF object to check
+ \param smvcf               The SimpleVCF object to check, cannot be const because it can call the info field parser
  \param minCovcutoff        The minimum coverage cutoff
  \param maxCovcutoff        The maximum coverage cutoff
  \param minMapabilitycutoff    The mapability score cutoff
@@ -34,22 +47,27 @@
  \return  : True if the SimpleVCF passes all the aforementioned checks
 */
 
-bool passedFilters(SimpleVCF * smvcf,int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minGQcutoff){
+bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
+		   //int minCovcutoff,int maxCovcutoff,double minMapabilitycutoff,int minMQcutoff,int minGQcutoff){
     /////////////////////////////////////////////////////////////////
     //           FILTERING INDELS AND UNDEFINED REF ALLELE         //
     /////////////////////////////////////////////////////////////////
-
-
-    bool notFoundNonindel=smvcf->containsIndel() ;
-
-    if(notFoundNonindel){ rejectIndel++;  //we don't want indels		
-	return false;
-    }
+    
 
     if(!smvcf->isResolvedSingleBasePairREF()){ rejectREFValidREF++; 
 	return false; }  //REF al  
     if(!smvcf->isResolvedSingleBasePairALT()){ rejectREFValidALT++; 
 	return false;  } //ALT al
+
+
+    bool notFoundNonindel=smvcf->containsIndel() ;
+
+    
+    if(notFoundNonindel){ rejectIndel++;  //we don't want indels		
+	return false;
+    }
+    
+
 
 
 
@@ -63,73 +81,52 @@ bool passedFilters(SimpleVCF * smvcf,int minCovcutoff,int maxCovcutoff,double mi
     // - are in the 2.5% tails of the coverage distribution
     int coverageREF=smvcf->getDepth();
 
-    if(coverageREF < minCovcutoff ||
-       coverageREF > maxCovcutoff ){
+    if(coverageREF < filtersToUse->getMinCovcutoff() ||
+       coverageREF > filtersToUse->getMaxCovcutoff() ){
 	rejectLOWCOV_REF++;
 	return false;
     }
 
 
 
-    // - have Map20 < 1
-    if(smvcf->hasInfoField("Map20")){
-	if(smvcf->getInfoField<double>("Map20") < minMapabilitycutoff){
-	    rejectMap20++;
-	    return false;
-	}
-    }
 
 
-
-
-
-
-    // - have MQ< 30
-    double minMQ=smvcf->getInfoField<double>("MQ");
-		    
-    if(minMQ < minMQcutoff){
-	rejectLOWMQ++;
-	return false;
-    }
-
-
-    // - have GQ < 40
-    //float minQual =smvcf->getQual();
-    float minQual =smvcf->getGenotypeQual();
-					
-    if(minQual< minGQcutoff){
+    // - have GQ < X				
+    if(smvcf->getGenotypeQual() < filtersToUse->getMinGQcutoff() ){
 	rejectLOWQUAL++;
 	return false;
     }
 
+
 		    
 
 	    
-    // - are ± 5bp of InDels
-    bool isCloseToIndel=(smvcf->getCloseIndel() );	    
-
-    if(isCloseToIndel){
-	rejectCloseIndels++;
-	return false;
+    // - are ± Xbp of InDels
+    if(filtersToUse->getFilterIndelProx()){
+	bool isCloseToIndel=(smvcf->getCloseIndel() );	    
+	if(isCloseToIndel){	
+	    rejectCloseIndels++;
+	    return false;
+	}
     }
-
 
     // - are flagged as SysErr
-    if(smvcf->hasInfoField("SysErr")){
-	rejectSysERR++;
-	return false;
+    if(filtersToUse->getSystemError()){
+	if(smvcf->hasInfoField("SysErr")){
+	    rejectSysERR++;
+	    return false;
+	}
     }
-
-
 
     // - are flagged as RM (repeat masked)
-    if(smvcf->hasInfoField("RM")){
-	rejectRM++;
-	return false;
+    if(filtersToUse->getRepeatMasking()){
+	
+	if(smvcf->hasInfoField("RM")){
+	    rejectRM++;
+	    return false;
+	}
+	
     }
-
-
-
 
 
 		    
@@ -138,7 +135,29 @@ bool passedFilters(SimpleVCF * smvcf,int minCovcutoff,int maxCovcutoff,double mi
     if(smvcf->isUnresolvedGT() ){ rejectREF_unknownGeno++; 
 	return false; }
 
+    //Check the info fields at the end
+    //Because the info fields are not parsed automatically
+    
 
+    // - have Map20 < 1
+    if(smvcf->hasInfoField("Map20")){
+	if( (smvcf->getInfoField<double>("Map20")) < filtersToUse->getMinMapabilitycutoff() ){
+	    rejectMap20++;
+	    return false;
+	}	
+    }
+
+
+
+
+
+    // - have MQ< 30
+    double minMQ=smvcf->getInfoField<double>("MQ");
+		    
+    if(minMQ < filtersToUse->getMinMQcutoff()){
+	rejectLOWMQ++;
+	return false;
+    }
 
     return true;		   
 }

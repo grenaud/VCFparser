@@ -74,7 +74,7 @@ private:
     ifstream bmtblFile; //for text mode
     inline bool getNextLine();
     BAMTableObj * btoToReturn;
-    inline bool flagCpG(BAMTableObj * previous,BAMTableObj * current);
+    inline void flagCpG(BAMTableObj * previous,BAMTableObj * current);
 
 public:
 

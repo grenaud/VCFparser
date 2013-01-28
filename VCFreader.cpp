@@ -115,6 +115,9 @@ bool VCFreader::getNextLine(){
 		return true;
 	}
     }
+    cerr<<"Invalid state in VCFreader::getNextLine()"<<endl;
+    exit(1);
+    return false;
 }
 
 
@@ -129,14 +132,14 @@ bool VCFreader::hasData(){
 	int indexQueue=0;
 	while(loop){
 	    if(getNextLine()){
-		SimpleVCF svcf (currentline);
+		SimpleVCF * svcf = new SimpleVCF(currentline);
 		if(queueOfVCFs.size() != 0 ){
-		    flagCpG( &(queueOfVCFs.back()),&svcf);
+		    flagCpG( queueOfVCFs.back(),svcf);
 		}
 		//cout<<"Adding "<<svcf<<endl;
 		queueOfVCFs.push_back(svcf);
 
-		if(svcf.containsIndel()){
+		if(svcf->containsIndel()){
 		    if(indexInQueueOfIndels == -1)
 			indexInQueueOfIndels=indexQueue;		   
 		}
@@ -162,13 +165,13 @@ bool VCFreader::hasData(){
     //if subsequent call, and queue full
     if(fullQueue){
 	if(getNextLine()){
-	    SimpleVCF svcf (currentline);
+	    SimpleVCF * svcf = new  SimpleVCF(currentline);
 	    if(queueOfVCFs.size() != 0 ){
-		flagCpG( &(queueOfVCFs.back()),&svcf);
+		flagCpG( queueOfVCFs.back(),svcf);
 	    }	    
 	    queueOfVCFs.push_back(svcf);
 	    
-	    if(svcf.containsIndel()){	
+	    if(svcf->containsIndel()){	
 		if(indexInQueueOfIndels == -1)
 		  indexInQueueOfIndels=queueOfVCFs.size()-1;
 	    }
@@ -190,7 +193,7 @@ bool VCFreader::hasData(){
 }
 
 
-inline bool VCFreader::flagCpG(SimpleVCF * previous,SimpleVCF * current){ //pass by address
+inline void VCFreader::flagCpG(SimpleVCF * previous,SimpleVCF * current){ //pass by address
     if( ( (previous->getPosition()+1) == current->getPosition())  &&   //one position behind
 	(  previous->getChr()         == current->getChr()    )   &&   //on same chr
 	(previous->hasAtLeastOneC()   && current->hasAtLeastOneG()) ){  //previous has at least one C, current has at least one G
@@ -216,7 +219,9 @@ SimpleVCF * VCFreader::getData(){
 
     //SimpleVCF svcf =queueOfVCFs.front();
 
-    svcfToReturn =new SimpleVCF(queueOfVCFs.front());
+    //svcfToReturn =new SimpleVCF(queueOfVCFs.front());
+    svcfToReturn = queueOfVCFs.front();
+
     // cout<<&(queueOfVCFs.front())<<endl;
     // cout<<svcfToReturn<<endl;
     //delete svcfToReturn;
@@ -225,19 +230,19 @@ SimpleVCF * VCFreader::getData(){
 
 
     //look ahead   
-    if(indexInQueueOfIndels == 0){//last element that is to be return is an indel
+    if(indexInQueueOfIndels == 0){//last element that is to be returned is an indel
 	svcfToReturn->setCloseIndel(true);
 	indexInQueueOfIndels = -1;
     }else{
 	if(indexInQueueOfIndels != 0){//elements in the list that are indels, need to check them
 	    int indexInList=0;	    
-	    list<SimpleVCF>::iterator it;
+	    list<SimpleVCF *>::iterator it;
 	    for ( it=queueOfVCFs.begin() ; it != queueOfVCFs.end(); it++ ){
 		if(indexInList<=indexInQueueOfIndels){
-		    if( it->containsIndel()){
+		    if( (*it)->containsIndel()){
 
-			if( ((it->getPosition() - svcfToReturn->getPosition() ) <= readAhead) &&
-			    (it->getChr() == svcfToReturn->getChr()) ){
+			if( (((*it)->getPosition() - svcfToReturn->getPosition() ) <= readAhead) &&
+			    ((*it)->getChr() == svcfToReturn->getChr()) ){
 			    svcfToReturn->setCloseIndel(true);			    
 			}
 

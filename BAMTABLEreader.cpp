@@ -102,17 +102,21 @@ bool BAMTABLEreader::getNextLine(){
 		return true;
 	}
     }
+
+    cerr<<"Invalid state in BAMTABLEreader::getNextLine()"<<endl;
+    exit(1);
+    return false;
 }
 
 
 
-inline bool BAMTABLEreader::flagCpG(BAMTableObj * previous,BAMTableObj * current){ //pass by address
+inline void BAMTABLEreader::flagCpG(BAMTableObj * previous,BAMTableObj * current){ //pass by address
     if( ( (previous->getPosition()+1) == current->getPosition())  &&   //one position behind
 	(  previous->getChr()         == current->getChr()    )   &&   //on same chr
 	(previous->hasAtLeastOneC()   && current->hasAtLeastOneG()) ){  //previous has at least one C, current has at least one G
 	previous->setCpg(true);
 	current->setCpg(true);
-    }
+    }    
 }
 
 

@@ -7,7 +7,7 @@
 
 #include "SimpleVCF.h"
 
-static unsigned int limitToReOpenFP = 200; //if the coordinate is this far away, we will re-open the file pointer
+//static unsigned int limitToReOpenFP = 200; //if the coordinate is this far away, we will re-open the file pointer
 
 SimpleVCF::SimpleVCF(){
 
@@ -42,7 +42,7 @@ SimpleVCF::SimpleVCF(string line){
     //for sites with multiple alt bases
     altAlleles      =     allTokens(alt,',');
     allAltResolvedSingleBasePair=true;
-    for(int i=0;i<altAlleles.size();i++){
+    for(unsigned int i=0;i<altAlleles.size();i++){
 	allAltResolvedSingleBasePair&=validAltBP( altAlleles[i] ); //true if ref = A,C,G,T or .
     }
     
@@ -63,7 +63,8 @@ SimpleVCF::SimpleVCF(string line){
 
     //INFO FIELD
     infoFieldRaw =        fields[7] ;
-    infoField    =        info2map( infoFieldRaw );
+    haveInfoField=false;
+    
 
 
     //FORMAT FIELDS
@@ -77,8 +78,8 @@ SimpleVCF::SimpleVCF(string line){
 	exit(1);
     }
 
-    for(int i=0;i<formatFieldNames.size();i++){
-	// cout<<"formatFieldNames["<<i<<"] "<<formatFieldNames[i]<<endl;
+    for(unsigned int i=0;i<formatFieldNames.size();i++){
+	//cout<<"formatFieldNames["<<i<<"] "<<formatFieldNames[i]<<" = "<<formatFieldValues[i]<<endl;
 	if(formatFieldNames[i] == "GT"){ 
 	    indexGenotype     =i; 
 	    formatFieldGT=                   formatFieldValues[i]; 
@@ -113,37 +114,38 @@ SimpleVCF::SimpleVCF(string line){
 	    continue;
 	}
 
-	if(formatFieldNames[i] == "A"){   
-	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	    for(int j=0;j<adfield.size();j++){
-		countA.push_back(   destringify<int>( adfield[j]) );
-	    }
-	    continue;
-	}
+	//To uncomment the fields to get these fields
+	// if(formatFieldNames[i] == "A"){   
+	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	//     for(int j=0;j<adfield.size();j++){
+	// 	countA.push_back(   destringify<int>( adfield[j]) );
+	//     }
+	//     continue;
+	// }
 
-	if(formatFieldNames[i] == "C"){   
-	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	    for(int j=0;j<adfield.size();j++){
-		countC.push_back(   destringify<int>( adfield[j]) );
-	    }
-	    continue;
-	}
+	// if(formatFieldNames[i] == "C"){   
+	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	//     for(int j=0;j<adfield.size();j++){
+	// 	countC.push_back(   destringify<int>( adfield[j]) );
+	//     }
+	//     continue;
+	// }
 
-	if(formatFieldNames[i] == "G"){   
-	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	    for(int j=0;j<adfield.size();j++){
-		countG.push_back(   destringify<int>( adfield[j]) );
-	    }
-	    continue;
-	}
+	// if(formatFieldNames[i] == "G"){   
+	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	//     for(int j=0;j<adfield.size();j++){
+	// 	countG.push_back(   destringify<int>( adfield[j]) );
+	//     }
+	//     continue;
+	// }
 
-	if(formatFieldNames[i] == "T"){   
-	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	    for(int j=0;j<adfield.size();j++){
-		countT.push_back(   destringify<int>( adfield[j]) );
-	    }
-	    continue;
-	}
+	// if(formatFieldNames[i] == "T"){   
+	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	//     for(int j=0;j<adfield.size();j++){
+	// 	countT.push_back(   destringify<int>( adfield[j]) );
+	//     }
+	//     continue;
+	// }
 	    
 
 
@@ -166,8 +168,17 @@ SimpleVCF::~SimpleVCF(){
     // delete formatFieldNames;
     // delete formatFieldValues;
     //exit(1);
+    if(haveInfoField)
+	delete infoField;
 }
 
+void SimpleVCF::parseInfoFields(){
+    haveInfoField=true;
+    infoField    =        info2map( infoFieldRaw );
+
+
+
+}
 
 string SimpleVCF::getRef() const{
     return ref;
@@ -198,8 +209,9 @@ string SimpleVCF::getInfoFieldRaw() const{
 }
 
 
-bool   SimpleVCF::hasInfoField(string tag) const{
-    return (infoField.find(tag)  != infoField.end());
+bool   SimpleVCF::hasInfoField(string tag) {
+    if(!haveInfoField){ parseInfoFields(); }
+    return (infoField->find(tag)  != infoField->end());
 }
 
 
@@ -231,7 +243,9 @@ int     SimpleVCF::getDepth() const{
     }
 }
 
-int     SimpleVCF::getDepthInfo() const{
+int     SimpleVCF::getDepthInfo() {
+    if(!haveInfoField){ parseInfoFields(); }
+
     if(hasInfoField("DP")){
 	int toReturn = getInfoField<int>("DP");
 	return toReturn;
@@ -339,7 +353,8 @@ char SimpleVCF::getRandomAllele() const{
 
 // ostream& operator<<(ostream& os, const SimpleVCF& smvcf){
 void SimpleVCF::print(ostream& os) const{
-
+    // cerr<<"Error"<<endl;
+    // exit(1);
     // os<<smvcf.chrName<<"\t"
     //   <<smvcf.position<<"\t"
     //   <<smvcf.ref<<"\t"
@@ -496,7 +511,7 @@ char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
 
 int SimpleVCF::getADforA(){
     int toReturn=0;
-    for(int j=0;j<countA.size();j++){
+    for(unsigned int j=0;j<countA.size();j++){
 	toReturn+=countA[j];
     }
     return toReturn;
@@ -504,7 +519,7 @@ int SimpleVCF::getADforA(){
  
 int SimpleVCF::getADforC(){
     int toReturn=0;
-    for(int j=0;j<countC.size();j++){
+    for(unsigned int j=0;j<countC.size();j++){
 	toReturn+=countC[j];
     }
     return toReturn;
@@ -512,7 +527,7 @@ int SimpleVCF::getADforC(){
 
 int SimpleVCF::getADforG(){
     int toReturn=0;
-    for(int j=0;j<countG.size();j++){
+    for(unsigned int j=0;j<countG.size();j++){
 	toReturn+=countG[j];
     }
     return toReturn;
@@ -521,7 +536,7 @@ int SimpleVCF::getADforG(){
 
 int SimpleVCF::getADforT(){
     int toReturn=0;
-    for(int j=0;j<countT.size();j++){
+    for(unsigned int j=0;j<countT.size();j++){
 	toReturn+=countT[j];
     }
     return toReturn;

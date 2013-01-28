@@ -77,12 +77,13 @@ private:
 
     vector<string> fields;
     string infoFieldRaw;
-    map<string, string> infoField;
+    map<string, string> * infoField;
 
     vector<string> formatFieldNames;
     vector<string> formatFieldValues;
 
     inline bool hasAllele(char bp) const ;
+    bool haveInfoField;
 public:
 
 //! Constructor 
@@ -104,6 +105,7 @@ public:
 //! Retrieves the # of alternative alleles found
     int getAltCount() const;
 
+    void parseInfoFields();
 
 //! Retrieves the potential associated ID
     string getID() const;
@@ -119,13 +121,14 @@ public:
 
 //! To check if one of the INFO fields exist
 /*!
- *
+ *   This subroutine is not const because there is a possibility
+ *   that it will call parseInfoFields()
  *
   \param tag : Tag of the field in the info line
   \return  : returns true if field exists, false otherwise
   \sa  getInfoField()
 */
-    bool hasInfoField(string tag) const;
+    bool hasInfoField(string tag)  ;
 
     char getRandomAllele() const;
     char getRandomAlleleUsingPL(int minPLdiffind) const;
@@ -141,9 +144,10 @@ public:
   \sa  hasInfoField()
 */
     template <typename T>
-	T   getInfoField(string tag) const {
-	map<string,string>::const_iterator it=infoField.find(tag);
-	if(it == infoField.end()){
+	T   getInfoField(string tag)  {
+	if(!haveInfoField){ parseInfoFields(); }
+	map<string,string>::const_iterator it=infoField->find(tag);
+	if(it == infoField->end()){
 	    return T();
 	}else{
 	    return destringify<T>(it->second);
@@ -160,7 +164,7 @@ public:
     //! Retrieves the depth, 
     int    getDepth() const;
     //! Retrieves the depth using the info field (all reads, not just the ones that pass quality)
-    int    getDepthInfo() const;
+    int    getDepthInfo() ;
 
 
     //! Retrieves the pl field
