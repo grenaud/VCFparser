@@ -145,11 +145,29 @@ bool BAMTableObj::hasAtLeastOneT() const  {
 
 
 bool BAMTableObj::hasAllele(int indexAlle) const{
+
+    if( (indexAlle<1)  ||  (indexAlle>4) ) {	
+	cerr<<"BAMTableObj: hasAllele() index cannot be "<<indexAlle<<" for this record  "<<(*this)<<endl;
+	exit(1);    
+    }
     return ( alleleCount[indexAlle-1] > 0 );
 }
 
 bool BAMTableObj::hasOnly2Alleles(int firstIndex,int secondIndex) const{    
+
+    if( (firstIndex<1)  ||  (firstIndex>4) ) {	
+	cerr<<"BAMTableObj: hasOnly2Alleles() index cannot be "<<firstIndex<<" for this record  "<<(*this)<<endl;
+	exit(1);    
+    }
+
+    if( (secondIndex<1)  ||  (secondIndex>4) ) {	
+	cerr<<"BAMTableObj: hasOnly2Alleles() index cannot be "<<secondIndex<<" for this record  "<<(*this)<<endl;
+	exit(1);    
+    }
+
+
     for(int i=0;i<4;i++){	
+    //checking for alleles excluding the firstIndex secondIndex
 	if( (i==(firstIndex-1)) ||
 	    (i==(secondIndex-1))  )
 	    continue;
@@ -159,5 +177,29 @@ bool BAMTableObj::hasOnly2Alleles(int firstIndex,int secondIndex) const{
     }
     return true;
 }
+
+
+
+bool BAMTableObj::hasOnlyThisAlleles(int firstIndex) const{    
+
+    if( (firstIndex<1)  ||  (firstIndex>4) ) {	
+	cerr<<"BAMTableObj: hasOnlyThisAlleles index cannot be "<<firstIndex<<" for this record  "<<(*this)<<endl;
+	exit(1);    
+    }
+
+
+    for(int i=0;i<4;i++){	
+	//checking for alleles excluding the firstIndex secondIndex
+	if( (i==(firstIndex-1))  )
+	    continue;
+    
+	if( alleleCount[i] > 0 )
+	    return false;
+    }
+
+    return true;
+}
+
+
 
 

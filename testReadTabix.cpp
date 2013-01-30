@@ -45,7 +45,7 @@ int main (int argc, char *argv[]) {
     		    "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
     		    "10",
     		    557572,
-    		    597592,
+    		    557582,
     		    5);
 
     		    // 75060,
@@ -56,6 +56,7 @@ int main (int argc, char *argv[]) {
     	SimpleVCF * toprint=vcfr.getData();
 	//double testingmq= 
 	cout<<toprint->getInfoField<double>("MQ")<<endl;
+	//cout<<toprint->getInfoField<double>("MQ")<<endl;
 	//cout<<toprint->getDepth()<<"\t"<<toprint->getDepthInfo()<<"\t"<<( toprint->getADforA() + toprint->getADforC() + toprint->getADforG() +toprint->getADforT() )<<"\t"<<(*toprint)<<endl;
 	//cout<<*toprint<<"\t"<<toprint->containsIndel()<<"\t"<<toprint->getCloseIndel()<<"\t"<<endl;
 	//     toprint->hasAtLeastOneA()<<"\t"<<

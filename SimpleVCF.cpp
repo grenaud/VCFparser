@@ -380,7 +380,7 @@ void SimpleVCF::print(ostream& os) const{
 }
 
 
-bool SimpleVCF::hasAllele(char bp) const {
+bool SimpleVCF::isThisAllelePresent(char bp) const {
 
     if(resolvedSingleBasePairREF && resolvedSingleBasePairALT){ //only look at sites with a single bp
 	if( homozygousREF ){ return (ref[0] == bp); }
@@ -395,28 +395,28 @@ bool SimpleVCF::hasAllele(char bp) const {
 
 
 bool SimpleVCF::hasAtLeastOneA() const  {   
-    return hasAllele('A');
+    return isThisAllelePresent('A');
 }
 
 bool SimpleVCF::hasAtLeastOneC() const  {
-    return hasAllele('C');
+    return isThisAllelePresent('C');
 }
 
 bool SimpleVCF::hasAtLeastOneG() const  {
-    return hasAllele('G');
+    return isThisAllelePresent('G');
 }
 
 bool SimpleVCF::hasAtLeastOneT() const  {
-    return hasAllele('T');
+    return isThisAllelePresent('T');
 }
 
 
 bool SimpleVCF::hasAllele(int indexAlle) const  {
 
-    if(indexAlle == 1){return hasAllele('A');}
-    if(indexAlle == 2){return hasAllele('C');}
-    if(indexAlle == 3){return hasAllele('G');}
-    if(indexAlle == 4){return hasAllele('T');}
+    if(indexAlle == 1){return isThisAllelePresent('A');}
+    if(indexAlle == 2){return isThisAllelePresent('C');}
+    if(indexAlle == 3){return isThisAllelePresent('G');}
+    if(indexAlle == 4){return isThisAllelePresent('T');}
 
     cerr<<"SimpleVCF: hasAllele() request for value: "<<indexAlle<<" cannot be completed, must be between 1 and 4, exiting"<<endl;
     exit(1);

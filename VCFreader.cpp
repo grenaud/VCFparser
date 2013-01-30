@@ -68,12 +68,25 @@ VCFreader::~VCFreader(){
     }
     if(textMode)
 	vcfFile.close();
+
+    // if(!queueOfVCFs.empty()){
+    // 	cerr<<"The queue still contains elements " <<endl;
+    // 	exit(1);
+    // }
+
+    while(!queueOfVCFs.empty()){
+	delete( queueOfVCFs.front() );
+	queueOfVCFs.pop_front();
+    }
+
     queueOfVCFs.clear();
 
+    //cout<<"deleteDest "<<svcfToReturn<<endl;
     delete svcfToReturn;
 }
 
 void VCFreader::repositionIterator(string chrName,int start,int end){
+
 
     if(!tabixMode){
 	cerr<<"The subroutine repositionIterator can only be called on objects constructed using tabix " <<endl;
@@ -82,8 +95,8 @@ void VCFreader::repositionIterator(string chrName,int start,int end){
 
 
     //re-initializing variables
-    needToPopulateQueue=true;
-    fullQueue          =false;
+    needToPopulateQueue =true;
+    fullQueue           =false;
     endQueue            =false;
     numberOfTimesHasDataWasCalled=0;
 
@@ -94,6 +107,11 @@ void VCFreader::repositionIterator(string chrName,int start,int end){
     indexInQueueOfIndels=-1;
     indexOfLastIndel=0;
     previouslyFoundIndel=false;
+
+    while(!queueOfVCFs.empty()){
+	delete( queueOfVCFs.front() );
+	queueOfVCFs.pop_front();
+    }
 
     queueOfVCFs.clear();
 
@@ -133,6 +151,7 @@ bool VCFreader::hasData(){
 	while(loop){
 	    if(getNextLine()){
 		SimpleVCF * svcf = new SimpleVCF(currentline);
+		//cout<<"new1 "<<svcf<<endl;
 		if(queueOfVCFs.size() != 0 ){
 		    flagCpG( queueOfVCFs.back(),svcf);
 		}
@@ -166,6 +185,7 @@ bool VCFreader::hasData(){
     if(fullQueue){
 	if(getNextLine()){
 	    SimpleVCF * svcf = new  SimpleVCF(currentline);
+	    //cout<<"new2 "<<svcf<<endl;
 	    if(queueOfVCFs.size() != 0 ){
 		flagCpG( queueOfVCFs.back(),svcf);
 	    }	    
@@ -188,8 +208,15 @@ bool VCFreader::hasData(){
 	//nothing to do
     }
 
+    
+    bool stillHasData=!(queueOfVCFs.empty());
 
-    return !(queueOfVCFs.empty());
+    // if(!stillHasData){ //getData() should not get called in this case, hence no deallocation
+    // 	cout<<"delete1  "<<svcfToReturn<<endl;
+    // 	delete svcfToReturn;
+    // }
+
+    return stillHasData;
 }
 
 
@@ -214,8 +241,9 @@ SimpleVCF * VCFreader::getData(){
     numberOfTimesHasDataWasCalled=0;
 
     //delete the previous data
+    //cout<<"delete2 "<<svcfToReturn<<endl;
     delete svcfToReturn;
-	//}
+    //}
 
     //SimpleVCF svcf =queueOfVCFs.front();
 

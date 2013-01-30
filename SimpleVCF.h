@@ -82,8 +82,11 @@ private:
     vector<string> formatFieldNames;
     vector<string> formatFieldValues;
 
-    inline bool hasAllele(char bp) const ;
+
+    //! Returns true if the allele char represented by the char is present, see hasAllele for use with int
+    inline bool isThisAllelePresent(char bp) const ;
     bool haveInfoField;
+
 public:
 
 //! Constructor 

@@ -8,8 +8,8 @@ LDFLAGS  = -lz
 
 all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable filterVCF FastQObj.o FastQParser.o testReadFastq SetVCFFilters.o
 
-mergeBAMTable.o:	mergeBAMTable.cpp
-	${CXX} ${CXXFLAGS} mergeBAMTable.cpp
+#mergeBAMTable.o:	mergeBAMTable.cpp
+#	${CXX} ${CXXFLAGS} mergeBAMTable.cpp
 
 mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
@@ -17,42 +17,45 @@ mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  
 filterVCF:	filterVCF.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-ReadTabix.o:	ReadTabix.cpp
-	${CXX} ${CXXFLAGS} $^
+%.o: %.cpp
+	${CXX} ${CXXFLAGS} $^ -o $@
 
-SetVCFFilters.o:	SetVCFFilters.cpp
-	${CXX} ${CXXFLAGS} $^
+#ReadTabix.o:	ReadTabix.cpp
+#	${CXX} ${CXXFLAGS} $^
 
-SimpleVCF.o:	SimpleVCF.cpp ${LIBGAB}utils.o 
-	${CXX} ${CXXFLAGS} $^
+#SetVCFFilters.o:	SetVCFFilters.cpp
+#	${CXX} ${CXXFLAGS} $^
 
-FastQObj.o:	FastQObj.cpp
-	${CXX} ${CXXFLAGS} $^
+#SimpleVCF.o:	SimpleVCF.cpp
+#	${CXX} ${CXXFLAGS} $^
 
-FastQParser.o:	FastQParser.cpp
-	${CXX} ${CXXFLAGS} $^
+#FastQObj.o:	FastQObj.cpp
+#	${CXX} ${CXXFLAGS} $^
 
-testReadFastq.o:	testReadFastq.cpp
-	${CXX} ${CXXFLAGS} $^
+#FastQParser.o:	FastQParser.cpp
+#	${CXX} ${CXXFLAGS} $^
+
+#testReadFastq.o:	testReadFastq.cpp
+#	${CXX} ${CXXFLAGS} $^
 
 testReadFastq: testReadFastq.o FastQObj.o FastQParser.o ${LIBGAB}utils.o 
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-BAMTableObj.o:	BAMTableObj.cpp ${LIBGAB}utils.o 
-	${CXX} ${CXXFLAGS} $^
+#BAMTableObj.o:	BAMTableObj.cpp
+#	${CXX} ${CXXFLAGS} $^
 
-testReadTabix.o:	testReadTabix.cpp
-	${CXX} ${CXXFLAGS} testReadTabix.cpp
+#testReadTabix.o:	testReadTabix.cpp
+#	${CXX} ${CXXFLAGS} testReadTabix.cpp
 
-VCFreader.o:	VCFreader.cpp
-	${CXX} ${CXXFLAGS} VCFreader.cpp
+#VCFreader.o:	VCFreader.cpp
+#	${CXX} ${CXXFLAGS} VCFreader.cpp
 
-testVCF.o:	testVCF.cpp
-	${CXX} ${CXXFLAGS} testVCF.cpp
+#testVCF.o:	testVCF.cpp
+#	${CXX} ${CXXFLAGS} testVCF.cpp
 
 
-FilterVCF.o:	FilterVCF.cpp
-	${CXX} ${CXXFLAGS} FilterVCF.cpp
+#FilterVCF.o:	FilterVCF.cpp
+#	${CXX} ${CXXFLAGS} FilterVCF.cpp
 
 testVCF:	testVCF.o ${LIBGAB}utils.o SimpleVCF.o FilterVCF.o BAMTableObj.o SetVCFFilters.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)

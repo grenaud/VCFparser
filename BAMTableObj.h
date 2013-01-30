@@ -59,6 +59,8 @@ public:
     bool hasAllele(int indexAlle) const;
     //! Determines if a BAMTable record only has no other alleles than these two indices (A:1,C:2,G:3,T:4)
     bool hasOnly2Alleles(int firstIndex,int secondIndex) const;
+    //! Determines if a BAMTable record only has no other alleles than this index (A:1,C:2,G:3,T:4)
+    bool hasOnlyThisAlleles(int firstIndex) const;
 
     friend BAMTableObj operator+(const BAMTableObj &bo1, const BAMTableObj &bo2){
 	BAMTableObj sum (bo1);	
