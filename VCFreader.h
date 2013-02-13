@@ -11,6 +11,7 @@
 #include <list>
 #include <fstream> 
 #include <memory> 
+#include <gzstream.h>
 
 #include "SimpleVCF.h"
 #include "ReadTabix.h"
@@ -77,7 +78,9 @@ private:
     bool tabixMode;
     bool textMode;
 
-    ifstream vcfFile; //for text mode
+    bool repoCalledHasData; //flag if the repositionIterator was called, set to true by repositionIterator() and false by hasData()
+
+    igzstream vcfFile; //for text mode
     inline bool getNextLine();
     SimpleVCF * svcfToReturn;
     inline void flagCpG(SimpleVCF * previous,SimpleVCF * current);
@@ -108,7 +111,7 @@ public:
   \param file : Full path of the vcf file
   \param indelsAhead : Mark this many positions around an indel to flag them as close to indel
 */
-    VCFreader(string file,int indelsAhead);
+    VCFreader(string file,int indelsAhead=5);
 
 
 

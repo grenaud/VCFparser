@@ -69,6 +69,10 @@ bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
     
 
 
+    //if the SetVCFFilters says that we do not filter beyond that, return true
+    if(filtersToUse->getDonotFilter()){
+	return true;
+    }
 
 
 
@@ -120,12 +124,10 @@ bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
 
     // - are flagged as RM (repeat masked)
     if(filtersToUse->getRepeatMasking()){
-	
 	if(smvcf->hasInfoField("RM")){
 	    rejectRM++;
 	    return false;
-	}
-	
+	}       
     }
 
 

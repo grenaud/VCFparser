@@ -7,11 +7,12 @@
 
 #include "FastQParser.h"
 
-FastQParser::FastQParser(string file){
-    //cout<<file<<endl;
+FastQParser::FastQParser(string file,bool isFasta){
+    this->isFasta = isFasta;
+    
     fastqFile.open(file.c_str(), ios::in);    // open the streams
 
-    if (fastqFile.is_open()) {
+    if (fastqFile.good()) {
 	//fine
     }else{
 	cerr<<"Unable to open the file "<<file<<endl;
@@ -33,52 +34,93 @@ bool       FastQParser::hasData(){
     if(!initPointer){
 	initPointer=true;
     }else{
-	// cout<<"hasData"<<endl;
 	delete(toreturn);
     }
 
     numberOfTimesHasDataWasCalled++;
     bool flag;
 
-    flag=getline(fastqFile,currentline1);
 
-    if(!flag){
-	return false;
-    }else{	
-	if(currentline1.length() > 0 && currentline1[0] != '@'){
-	    cerr<<"Parse error with line "<<currentline1<<endl;
+    if(isFasta){
+	flag=getline(fastqFile,currentline1);
+	if(!flag){
+	    return false;
+	}else{	
+	    if(currentline1.length() > 0 && currentline1[0] != '>'){
+		cerr<<"Parse error with line "<<currentline1<<endl;
+		exit(1);
+	    }
+	}
+
+	string * id = new string(currentline1);
+	string * seq = new string();
+
+	while(flag){	
+	    char peekChar=fastqFile.peek();
+	    if(peekChar ==  EOF){
+		toreturn=new FastQObj(id,seq,0,isFasta);		  
+		return true;
+	    }
+
+	    if(peekChar ==  '>'){//beginning of next record
+		toreturn=new FastQObj(id,seq,0,isFasta);		      
+		return true;
+	    }
+
+
+	    flag=getline(fastqFile,currentline2);
+
+	    if(!flag){
+		cerr<<"Parse error with line "<<currentline1<<endl;
+		exit(1);
+	    }else{	
+		seq->append(currentline2);		    
+	    }
+	}
+
+	
+
+    }else{
+	flag=getline(fastqFile,currentline1);
+
+	if(!flag){
+	    return false;
+	}else{	
+	    if(currentline1.length() > 0 && currentline1[0] != '@'){
+		cerr<<"Parse error with line "<<currentline1<<endl;
+		exit(1);
+	    }
+	}
+
+	flag=getline(fastqFile,currentline2);
+
+	if(!flag){
+	    cerr<<"Parse error with line "<<currentline2<<endl;
 	    exit(1);
 	}
-    }
-    // cout<<"1 "<<currentline1<<endl;
-    flag=getline(fastqFile,currentline2);
-    // cout<<"2 "<<currentline2<<endl;
-    if(!flag){
-	cerr<<"Parse error with line "<<currentline2<<endl;
-	exit(1);
-    }
 
-    flag=getline(fastqFile,currentline3);
-    // cout<<"3 "<<currentline3<<endl;
-    if(!flag){
-	cerr<<"Parse error with line "<<currentline3<<endl;
-	exit(1);
-    }else{	
-	if(currentline3.length() > 0 && currentline3[0] != '+'){
+	flag=getline(fastqFile,currentline3);
+
+	if(!flag){
 	    cerr<<"Parse error with line "<<currentline3<<endl;
 	    exit(1);
+	}else{	
+	    if(currentline3.length() > 0 && currentline3[0] != '+'){
+		cerr<<"Parse error with line "<<currentline3<<endl;
+		exit(1);
+	    }
 	}
-    }
 
-    flag=getline(fastqFile,currentline4);
-    // cout<<"4 "<<currentline4<<endl;
-    if(!flag){
-	cerr<<"Parse error with line "<<currentline4<<endl;
-	exit(1);
-    }
+	flag=getline(fastqFile,currentline4);
 
-    // cout<<"new "<<endl;
-    toreturn=new FastQObj(&currentline1,&currentline2,&currentline4);
+	if(!flag){
+	    cerr<<"Parse error with line "<<currentline4<<endl;
+	    exit(1);
+	}
+
+
+	toreturn=new FastQObj(&currentline1,&currentline2,&currentline4,isFasta);
+    }
     return true;
 }
 

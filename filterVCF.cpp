@@ -24,31 +24,107 @@ using namespace std;
 int main (int argc, char *argv[]) {
 
 
-    // VCFreader vcfr ("/mnt/scratch/sergi/exome/sidron/snps/gatk_2/annotated_LowQualDeamination/Y_sidron_exome_hg19_1000g_LowQualDeamination.md.bam.annotated_1.3-14gatk.vcf.gz",
-    // 		    "/mnt/scratch/sergi/exome/sidron/snps/gatk_2/annotated_LowQualDeamination/Y_sidron_exome_hg19_1000g_LowQualDeamination.md.bam.annotated_1.3-14gatk.vcf.gz.tbi",
-    // 		    "Y",
-    // 		    1,
-    // 		    28134309,
-    //                 5);
+    int minGQcutoff=40;
+    int minMQcutoff=30;
+    int minCovcutoff=0;
+    int maxCovcutoff=1000;
+    SetVCFFilters  * filtersVCF;
+    bool allowCloseIndelProx = false;
+    bool allowRepeatMasking  = false;
+    bool allowSysErr         = false;
+    double     minMapabilitycutoff =0;//map20 is wrong, we need to fix it
 
+    const string usage=string(string(argv[0])+
+			      "This program filters VCF files (prints to the stdout)\n"+
+			      +" [options] <vcf file>"+"\n"+
+			      "\t"+"--minCov [cov]" +"\t\t"+"Minimal coverage  (default: "+stringify(minCovcutoff)+")\n"+
+			      "\t"+"--maxCov [cov]" +"\t\t"+"Maximal coverage  (default: "+stringify(maxCovcutoff)+")\n"+
+			      "\t"+"--minGQ  [gq]" +"\t\t"+"Minimal genotype quality (default: "+stringify(minGQcutoff)+")\n"+
+			      "\t"+"--minMQ  [mq]" +"\t\t"+"Minimal mapping quality (default: "+stringify(minMQcutoff)+")\n"+
 
-    VCFreader vcfr (string(argv[1]),5);
+			      "\t"+"--allowindel"       +"\t\t" +"Allow sites considered within 5bp of an indel (default: "+booleanAsString(allowCloseIndelProx)+")\n"+
+			      "\t"+"--allowrm"          +"\t\t" +"Allow sites labeled repeat masked             (default: "+booleanAsString(allowRepeatMasking)+")\n"+
+			      "\t"+"--allowSysErr"      +"\t\t" +"Allow sites labeled as systematic error       (default: "+booleanAsString(allowSysErr)+")\n");
+			      //"\t"+"--minPL  [pl]" +"\t\t"+"Use this as the minimum difference of PL values instead of GQ    (default: "+stringify(minPLdiffind)+")\n"+
+
+			      
+    if(argc == 1 ||
+       (argc == 2 && (string(argv[1]) == "-h" || string(argv[1]) == "--help") )
+       ){
+	cerr << "Usage "<<usage<<endl;
+	return 1;       
+    }
+
+    //last arg is program name
+    for(int i=1;i<(argc-1);i++){ 
+
+	if(strcmp(argv[i],"--minCov") == 0 ){
+	    minCovcutoff=destringify<int>(argv[i+1]);
+	    i++;
+	    continue;
+	}
+
+       
+	if(strcmp(argv[i],"--maxCov") == 0 ){
+	    maxCovcutoff=destringify<int>(argv[i+1]);
+	    i++;
+	    continue;
+	}
+
+	if(strcmp(argv[i],"--minGQ") == 0 ){
+	    minGQcutoff=destringify<int>(argv[i+1]);
+	    i++;
+            continue;
+        }
+
+	if(strcmp(argv[i],"--minMQ") == 0 ){
+	    minMQcutoff=destringify<int>(argv[i+1]);
+	    i++;
+            continue;
+        }
+	
+
+	if(strcmp(argv[i],"--allowindel") == 0 ){
+	    allowCloseIndelProx =true;
+	    continue;
+	}
+
+	if(strcmp(argv[i],"--allowrm") == 0 ){
+	    allowRepeatMasking   =true;
+	    continue;
+	}
+
+	if(strcmp(argv[i],"--allowSysErr") == 0 ){
+	    allowSysErr     =true;
+	    continue;
+	}
+
+    }
+
+    filtersVCF= new SetVCFFilters (minGQcutoff          ,
+				   minMQcutoff          ,
+				   minMapabilitycutoff  ,
+				   !allowCloseIndelProx ,
+				   !allowRepeatMasking  ,
+				   !allowSysErr         ,
+				   minCovcutoff      ,
+				   maxCovcutoff  ,
+				   false     );
+    VCFreader vcfr (string(argv[argc-1]),5);
 	// 75060,
 	// 75070,
 	// 5);
 	
     while(vcfr.hasData()){
     	SimpleVCF * toprint=vcfr.getData();
-	// if(passedFilters(toprint,0, 10000,1.0,30,0)){
-	cout<<toprint->getRandomAlleleUsingPL(30)<<"\t"<<*toprint<<endl;	    
-	// }else{
-	//     // cout<<"FAIL\t"<<*toprint<<endl;
-	// }
-    	//cout<<*toprint<<"\t"<<toprint->containsIndel()<<"\t"<<toprint->getCloseIndel()<<endl;
+	if(passedFilters(toprint,filtersVCF)){
+	    cout<<*toprint<<endl;
+	}
+
     }
 
-    //    cout<<rejectFiltersTally()<<endl;
 
+    delete(filtersVCF);
     return 0;
 }
 

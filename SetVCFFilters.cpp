@@ -14,7 +14,8 @@ SetVCFFilters::SetVCFFilters(int    minGQcutoff         ,
 			     bool   repeatMasking       ,
 			     bool   systemError         ,    
 			     int    minCovcutoff        ,
-			     int    maxCovcutoff        ){
+			     int    maxCovcutoff        ,
+			     bool   donotFilter){
     
 
     this->minGQcutoff          = minGQcutoff         ;
@@ -24,6 +25,7 @@ SetVCFFilters::SetVCFFilters(int    minGQcutoff         ,
     this->filterIndelProx      = filterIndelProx;
     this->repeatMasking        = repeatMasking;
     this->systemError          = systemError;
+    this->donotFilter          = donotFilter;
 
     if(minCovcutoff < 0 ){
 	cerr<<"SetVCFFilters: Cannot have a negative minimum cutoff"<<endl;
@@ -86,4 +88,8 @@ int  SetVCFFilters::getMinCovcutoff() const {
 
 int  SetVCFFilters::getMaxCovcutoff() const {
     return maxCovcutoff;
+}
+
+bool SetVCFFilters::getDonotFilter() const {
+    return donotFilter;
 }

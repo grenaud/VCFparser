@@ -6,7 +6,6 @@
  */
 
 #include "SimpleVCF.h"
-
 //static unsigned int limitToReOpenFP = 200; //if the coordinate is this far away, we will re-open the file pointer
 
 SimpleVCF::SimpleVCF(){

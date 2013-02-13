@@ -26,6 +26,8 @@ private:
     int  minCovcutoff  ;
     int  maxCovcutoff  ;
     string name;
+    bool donotFilter  ;
+
 public:
    
     SetVCFFilters(int minGQcutoff=40,
@@ -35,7 +37,8 @@ public:
 		  bool repeatMasking   = true,   
 		  bool systemError     = true,
 		  int  minCovcutoff  =0,
-		  int  maxCovcutoff  =1000);
+		  int  maxCovcutoff  =1000,
+		  bool   donotFilter=false);
     ~SetVCFFilters();
 
     void setName(string name) ;
@@ -49,23 +52,31 @@ public:
     bool getSystemError() const ;
     int  getMinCovcutoff() const ;
     int  getMaxCovcutoff() const ;
+    bool getDonotFilter() const ;
 
     friend ostream& operator<<(ostream& os, const SetVCFFilters & ct){
 	if(ct.name != "")
 	    os<<"Cutoffs for "<<ct.name<< " : "<<endl;
-	os<<"Minimum genotype quality (GQ)                           = "<<ct.minGQcutoff<<endl;
-	os<<"Minimum RMS of the mapping qualities (MQ)               = "<<ct.minMQcutoff<<endl;
-	os<<"Minimum mapability                                      = "<<ct.minMapabilitycutoff<<endl;
-	os<<"Filter sites close to an indel                          = "<<booleanAsString(ct.filterIndelProx)<<endl;
-	/* if(ct.filterIndelProx){ */
-	/*     os<<"Proximity (in bp) for an indel "<<ct.bpForIndels<<endl; */
-	/* } */
-	os<<"Filter sites close labeled as repeat masked (RM)        = "<<booleanAsString(ct.repeatMasking)<<endl;
-	os<<"Filter sites close labeled as systematic error (SysErr) = "<<booleanAsString(ct.systemError)<<endl;
+	else
+	    os<<"Cutoffs  : "<<endl;
+	if(ct.donotFilter){
+	    os<<"None, all sites are allowed to proceed"<<ct.minGQcutoff<<endl;
+	    os<<"--------------"<<endl;
+	}else{
+	    os<<"Minimum genotype quality (GQ)                           = "<<ct.minGQcutoff<<endl;
+	    os<<"Minimum RMS of the mapping qualities (MQ)               = "<<ct.minMQcutoff<<endl;
+	    os<<"Minimum mapability                                      = "<<ct.minMapabilitycutoff<<endl;
+	    os<<"Filter sites close to an indel                          = "<<booleanAsString(ct.filterIndelProx)<<endl;
+	    /* if(ct.filterIndelProx){ */
+	    /*     os<<"Proximity (in bp) for an indel "<<ct.bpForIndels<<endl; */
+	    /* } */
+	    os<<"Filter sites close labeled as repeat masked (RM)        = "<<booleanAsString(ct.repeatMasking)<<endl;
+	    os<<"Filter sites close labeled as systematic error (SysErr) = "<<booleanAsString(ct.systemError)<<endl;
 
-	os<<"Minimum coverage                                        = "<<ct.minCovcutoff<<endl;
-	os<<"Minimum coverage                                        = "<<ct.maxCovcutoff<<endl;
-	os<<"--------------"<<endl;
+	    os<<"Minimum coverage                                        = "<<ct.minCovcutoff<<endl;
+	    os<<"Minimum coverage                                        = "<<ct.maxCovcutoff<<endl;
+	    os<<"--------------"<<endl;
+	}
 	return os;
     }
 	    

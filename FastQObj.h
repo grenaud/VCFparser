@@ -19,9 +19,10 @@ private:
     string * id;
     string * seq;
     string * qual;
+    bool isFasta;
 
 public:
-    FastQObj(string * _id,string * _seq,string * _qual);
+    FastQObj(string * _id,string * _seq,string * _qual,bool _isFasta=false);
     ~FastQObj();
     
     string * getSeq() const;
@@ -29,7 +30,10 @@ public:
     string * getQual() const;
     
     friend ostream& operator<<(ostream& str, FastQObj const& fqo){
-	str<<*(fqo.id)<<endl<<*(fqo.seq)<<endl<<"+"<<endl<<*(fqo.qual);
+	if(fqo.isFasta)
+	    str<<*(fqo.id)<<endl<<*(fqo.seq);
+	else
+	    str<<*(fqo.id)<<endl<<*(fqo.seq)<<endl<<"+"<<endl<<*(fqo.qual);
 	return str;
     }
 

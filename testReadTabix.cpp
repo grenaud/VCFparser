@@ -38,24 +38,27 @@ int main (int argc, char *argv[]) {
     	//cout<<svcf.getInfoField<float>("MQ")<<endl;
     	cout<<svcf.getPLHomoRef()<<endl;
     }
+    exit(1);
     }    
     
     if(1){
     VCFreader vcfr ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
     		    "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
     		    "10",
-    		    557572,
-    		    557582,
-    		    5);
+		    1,
+		    10,5);
+    		    // 557572,
+    		    // 557582,0);
 
     		    // 75060,
     		    // 75070,
     		    // 5);
-    
+    vcfr.repositionIterator("10",60000,60026);
+
     while(vcfr.hasData()){
     	SimpleVCF * toprint=vcfr.getData();
 	//double testingmq= 
-	cout<<toprint->getInfoField<double>("MQ")<<endl;
+	cout<<toprint->getCloseIndel()<<"\t"<<toprint->containsIndel()<<"\t"<<toprint->getPosition()<<endl;
 	//cout<<toprint->getInfoField<double>("MQ")<<endl;
 	//cout<<toprint->getDepth()<<"\t"<<toprint->getDepthInfo()<<"\t"<<( toprint->getADforA() + toprint->getADforC() + toprint->getADforG() +toprint->getADforT() )<<"\t"<<(*toprint)<<endl;
 	//cout<<*toprint<<"\t"<<toprint->containsIndel()<<"\t"<<toprint->getCloseIndel()<<"\t"<<endl;
@@ -65,6 +68,7 @@ int main (int argc, char *argv[]) {
 	//     toprint->hasAtLeastOneT()<<"\t"<<endl;
 
     }
+    exit(1);
     }
 
 

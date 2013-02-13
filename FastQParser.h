@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <gzstream.h>
 
 #include "FastQObj.h"
 
@@ -19,7 +20,8 @@ using namespace std;
 
 class FastQParser{
 private:
-    ifstream fastqFile; 
+    bool isFasta;
+    igzstream fastqFile; 
     int numberOfTimesHasDataWasCalled;
     string currentline1;
     string currentline2;
@@ -29,7 +31,7 @@ private:
     FastQObj * toreturn;
 
 public:
-    FastQParser(string file);
+    FastQParser(string file,bool isFasta=false);
     ~FastQParser();
 
     bool       hasData();

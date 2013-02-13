@@ -32,7 +32,8 @@ int main (int argc, char *argv[]) {
 			       true, //RM
 			       true, //syserr
 			       70,    //cov min
-			       77); //cov max
+			       77, //cov max
+			       false);  //let all sites through
 
    cout<<boolStringify(passedFilters(test,  &filtersToUse))<<endl;
 

@@ -6,6 +6,7 @@
  */
 
 #include "VCFreader.h"
+//#define DEBUG
 
 
 VCFreader::VCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead){
@@ -19,7 +20,8 @@ VCFreader::VCFreader(string file,string indexForFile,string chrName,int start,in
 
     svcfToReturn=0;
 
-    
+    repoCalledHasData=false;
+	    
     indexInQueueOfIndels=-1;
     indexOfLastIndel=0;
     previouslyFoundIndel=false;
@@ -31,13 +33,13 @@ VCFreader::VCFreader(string file,string indexForFile,string chrName,int start,in
 
 
 
-VCFreader::VCFreader(string file,int indelsAhead=5){
+VCFreader::VCFreader(string file,int indelsAhead){
     readAhead=indelsAhead;
     numberOfTimesHasDataWasCalled=0;
     svcfToReturn=0;
 
     vcfFile.open(file.c_str(), ios::in);    // open the streams
-    if (vcfFile.is_open()) {
+    if (vcfFile.good()) {
 	//fine
     }else{
 	cerr<<"Unable to open the file "<<file<<endl;
@@ -48,6 +50,7 @@ VCFreader::VCFreader(string file,int indelsAhead=5){
     needToPopulateQueue =true;
     fullQueue           =false;
     endQueue            =false;
+    repoCalledHasData=false;
 
 
     indexInQueueOfIndels=-1;
@@ -115,7 +118,26 @@ void VCFreader::repositionIterator(string chrName,int start,int end){
 
     queueOfVCFs.clear();
 
-    rt->repositionIterator(chrName,start,end);
+    //if(bp
+    //we need to jump a bit behind to detect CpG and indels
+    int coordinatePrior=max(readAhead,1);
+    rt->repositionIterator(chrName,start-coordinatePrior,end);
+    
+
+    //need to reposition the queue to the desired coord
+    while(hasData()){
+	SimpleVCF * current=queueOfVCFs.front();
+	//SimpleVCF * current=getData();
+	//cout<<current->getPosition()<<endl;
+	//when the current position is found, we set the flag repoCalledHasData
+	//such that hasData will return true and the first element of the queue will be returned
+	if(int(current->getPosition()) >= start){
+	    repoCalledHasData=true;
+	    break;
+	}
+	current=getData();
+    }
+    
 
 }
 
@@ -141,6 +163,11 @@ bool VCFreader::getNextLine(){
 
 bool VCFreader::hasData(){
 
+    if(repoCalledHasData){
+	repoCalledHasData=false;
+	return true;
+    }
+
     numberOfTimesHasDataWasCalled++;
 
     
@@ -150,12 +177,17 @@ bool VCFreader::hasData(){
 	int indexQueue=0;
 	while(loop){
 	    if(getNextLine()){
+#ifdef DEBUG		
+		cout<<"currentline "<<currentline<<endl;
+#endif
 		SimpleVCF * svcf = new SimpleVCF(currentline);
-		//cout<<"new1 "<<svcf<<endl;
+#ifdef DEBUG		
+		cout<<"new1 "<<svcf<<endl;
+#endif
 		if(queueOfVCFs.size() != 0 ){
 		    flagCpG( queueOfVCFs.back(),svcf);
 		}
-		//cout<<"Adding "<<svcf<<endl;
+		// cout<<"Adding "<<*svcf<<endl;
 		queueOfVCFs.push_back(svcf);
 
 		if(svcf->containsIndel()){
@@ -172,7 +204,7 @@ bool VCFreader::hasData(){
 	}
 	
 
-	if(queueOfVCFs.size() == (readAhead+1)){
+	if(queueOfVCFs.size() == (readAhead+1)){ //+1 for CPGs
 	    fullQueue=true;
 	}else{
 	    endQueue=true;
@@ -185,7 +217,10 @@ bool VCFreader::hasData(){
     if(fullQueue){
 	if(getNextLine()){
 	    SimpleVCF * svcf = new  SimpleVCF(currentline);
-	    //cout<<"new2 "<<svcf<<endl;
+#ifdef DEBUG		
+	     cout<<"new2 "<<*svcf<<endl;
+#endif
+	    // cout<<"size "<<queueOfVCFs.size()<<endl;
 	    if(queueOfVCFs.size() != 0 ){
 		flagCpG( queueOfVCFs.back(),svcf);
 	    }	    
@@ -256,37 +291,37 @@ SimpleVCF * VCFreader::getData(){
     queueOfVCFs.pop_front();
 
 
-
+    // cout<<endl<<"indexInQueueOfIndels "<<indexInQueueOfIndels<<endl;
     //look ahead   
-    if(indexInQueueOfIndels == 0){//last element that is to be returned is an indel
-	svcfToReturn->setCloseIndel(true);
-	indexInQueueOfIndels = -1;
-    }else{
-	if(indexInQueueOfIndels != 0){//elements in the list that are indels, need to check them
-	    int indexInList=0;	    
-	    list<SimpleVCF *>::iterator it;
-	    for ( it=queueOfVCFs.begin() ; it != queueOfVCFs.end(); it++ ){
-		if(indexInList<=indexInQueueOfIndels){
-		    if( (*it)->containsIndel()){
+    if(readAhead != 0){//we need to set the close to indel flag
+	if(indexInQueueOfIndels == 0){//last element that is to be returned is an indel
+	    svcfToReturn->setCloseIndel(true);
+	    indexInQueueOfIndels = -1;
+	}else{
+	    if(indexInQueueOfIndels != 0){//elements in the list that are indels, need to check them
+		int indexInList=0;	    
+		list<SimpleVCF *>::iterator it;
+		for ( it=queueOfVCFs.begin() ; it != queueOfVCFs.end(); it++ ){
+		    if(indexInList<=indexInQueueOfIndels){
+			if( (*it)->containsIndel()){
 
-			if( (((*it)->getPosition() - svcfToReturn->getPosition() ) <= readAhead) &&
-			    ((*it)->getChr() == svcfToReturn->getChr()) ){
-			    svcfToReturn->setCloseIndel(true);			    
+			    if( (((*it)->getPosition() - svcfToReturn->getPosition() ) <= readAhead) &&
+				((*it)->getChr() == svcfToReturn->getChr()) ){
+				svcfToReturn->setCloseIndel(true);			    
+			    }
+
 			}
-
+		    }else{
+			break;
 		    }
-		}else{
-		    break;
-		}
 		
-		indexInList++;
+		    indexInList++;
+		}
+
 	    }
-
+	    indexInQueueOfIndels=max(indexInQueueOfIndels-1,-1);	
 	}
-	indexInQueueOfIndels=max(indexInQueueOfIndels-1,-1);
-	
     }
-
 
     //look behind for indels
     if(previouslyFoundIndel){
