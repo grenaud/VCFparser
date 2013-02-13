@@ -1,0 +1,5 @@
+VCFparser is a small C++ library for parsing VCF files, fast[aq] files and Bamtable files. It can filter VCF files and generate treemix input from VCF files.
+
+
+
+Contact : gabriel.reno [ at sign goes here ] gmail.com
