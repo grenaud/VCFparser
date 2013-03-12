@@ -6,15 +6,21 @@ CXXFLAGS = -Wall -Wunused-variable -lm -O3 -lz -I${LIBGAB} -I${LIBTABIX} -Igzstr
 LDFLAGS  = -lz
 
 
-all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable filterVCF FastQObj.o FastQParser.o testReadFastq SetVCFFilters.o
+all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable filterVCF FastQObj.o FastQParser.o testReadFastq SetVCFFilters.o vcf2mistar bamtable2mistar
 
 #mergeBAMTable.o:	mergeBAMTable.cpp
 #	${CXX} ${CXXFLAGS} mergeBAMTable.cpp
 
-mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a
+mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a gzstream/gzstream.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 filterVCF:	filterVCF.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+vcf2mistar:	vcf2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+bamtable2mistar:	bamtable2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a   BAMTableObj.o BAMTABLEreader.o  gzstream/gzstream.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 %.o: %.cpp
@@ -64,5 +70,5 @@ testReadTabix:	testReadTabix.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabi
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f  testReadTabix ReadTabix.o SimpleVCF.o testReadTabix.o VCFreader.o FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable.o mergeBAMTable filterVCF.o filterVCF FastQObj.o FastQParser.o testReadFastq SetVCFFilters.o  testReadFastq.o  testVCF.o
+	rm -f  testReadTabix mergeBAMTable filterVCF testReadFastq bamtable2mistar  vcf2mistar bamtable2mistar *.o
 

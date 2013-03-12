@@ -153,6 +153,19 @@ bool BAMTableObj::hasAllele(int indexAlle) const{
     return ( alleleCount[indexAlle-1] > 0 );
 }
 
+
+int BAMTableObj::countAllele(int indexAlle) const{
+
+    if( (indexAlle<1)  ||  (indexAlle>4) ) {	
+	cerr<<"BAMTableObj: countAllele() index cannot be "<<indexAlle<<" for this record  "<<(*this)<<endl;
+	exit(1);    
+    }
+    return ( alleleCount[indexAlle-1]  );
+}
+
+
+
+
 bool BAMTableObj::hasOnly2Alleles(int firstIndex,int secondIndex) const{    
 
     if( (firstIndex<1)  ||  (firstIndex>4) ) {	

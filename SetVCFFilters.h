@@ -27,6 +27,7 @@ private:
     int  maxCovcutoff  ;
     string name;
     bool donotFilter  ;
+    bool donotFilterButMQ  ;
 
 public:
    
@@ -38,7 +39,8 @@ public:
 		  bool systemError     = true,
 		  int  minCovcutoff  =0,
 		  int  maxCovcutoff  =1000,
-		  bool   donotFilter=false);
+		  bool   donotFilter=false,
+		  bool   donotFilterButMQ=false);
     ~SetVCFFilters();
 
     void setName(string name) ;
@@ -53,29 +55,37 @@ public:
     int  getMinCovcutoff() const ;
     int  getMaxCovcutoff() const ;
     bool getDonotFilter() const ;
+    bool getDonotFilterButMQ() const ;
 
     friend ostream& operator<<(ostream& os, const SetVCFFilters & ct){
 	if(ct.name != "")
 	    os<<"Cutoffs for "<<ct.name<< " : "<<endl;
 	else
 	    os<<"Cutoffs  : "<<endl;
-	if(ct.donotFilter){
-	    os<<"None, all sites are allowed to proceed"<<ct.minGQcutoff<<endl;
-	    os<<"--------------"<<endl;
-	}else{
-	    os<<"Minimum genotype quality (GQ)                           = "<<ct.minGQcutoff<<endl;
-	    os<<"Minimum RMS of the mapping qualities (MQ)               = "<<ct.minMQcutoff<<endl;
-	    os<<"Minimum mapability                                      = "<<ct.minMapabilitycutoff<<endl;
-	    os<<"Filter sites close to an indel                          = "<<booleanAsString(ct.filterIndelProx)<<endl;
-	    /* if(ct.filterIndelProx){ */
-	    /*     os<<"Proximity (in bp) for an indel "<<ct.bpForIndels<<endl; */
-	    /* } */
-	    os<<"Filter sites close labeled as repeat masked (RM)        = "<<booleanAsString(ct.repeatMasking)<<endl;
-	    os<<"Filter sites close labeled as systematic error (SysErr) = "<<booleanAsString(ct.systemError)<<endl;
 
-	    os<<"Minimum coverage                                        = "<<ct.minCovcutoff<<endl;
-	    os<<"Minimum coverage                                        = "<<ct.maxCovcutoff<<endl;
+	if(ct.donotFilterButMQ){
+	    os<<"None, but MQ"<<endl;
+	    os<<"Minimum RMS of the mapping qualities (MQ)               = "<<ct.minMQcutoff<<endl;
 	    os<<"--------------"<<endl;
+	}else{ 	
+	    if(ct.donotFilter){
+		os<<"None, all sites are allowed to proceed"<<endl;
+		os<<"--------------"<<endl;
+	    }else{
+		os<<"Minimum genotype quality (GQ)                           = "<<ct.minGQcutoff<<endl;
+		os<<"Minimum RMS of the mapping qualities (MQ)               = "<<ct.minMQcutoff<<endl;
+		os<<"Minimum mapability                                      = "<<ct.minMapabilitycutoff<<endl;
+		os<<"Filter sites close to an indel                          = "<<booleanAsString(ct.filterIndelProx)<<endl;
+		/* if(ct.filterIndelProx){ */
+		/*     os<<"Proximity (in bp) for an indel "<<ct.bpForIndels<<endl; */
+		/* } */
+		os<<"Filter sites close labeled as repeat masked (RM)        = "<<booleanAsString(ct.repeatMasking)<<endl;
+		os<<"Filter sites close labeled as systematic error (SysErr) = "<<booleanAsString(ct.systemError)<<endl;
+		
+		os<<"Minimum coverage                                        = "<<ct.minCovcutoff<<endl;
+		os<<"Minimum coverage                                        = "<<ct.maxCovcutoff<<endl;
+		os<<"--------------"<<endl;
+	    }
 	}
 	return os;
     }

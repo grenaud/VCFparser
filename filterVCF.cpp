@@ -32,6 +32,9 @@ int main (int argc, char *argv[]) {
     bool allowCloseIndelProx = false;
     bool allowRepeatMasking  = false;
     bool allowSysErr         = false;
+    bool allowall            = false;
+    bool allowallMQ          = false;
+
     double     minMapabilitycutoff =0;//map20 is wrong, we need to fix it
 
     const string usage=string(string(argv[0])+
@@ -44,7 +47,12 @@ int main (int argc, char *argv[]) {
 
 			      "\t"+"--allowindel"       +"\t\t" +"Allow sites considered within 5bp of an indel (default: "+booleanAsString(allowCloseIndelProx)+")\n"+
 			      "\t"+"--allowrm"          +"\t\t" +"Allow sites labeled repeat masked             (default: "+booleanAsString(allowRepeatMasking)+")\n"+
-			      "\t"+"--allowSysErr"      +"\t\t" +"Allow sites labeled as systematic error       (default: "+booleanAsString(allowSysErr)+")\n");
+			      "\t"+"--allowSysErr"      +"\t\t" +"Allow sites labeled as systematic error       (default: "+booleanAsString(allowSysErr)+")\n"+
+			      "\t"+"--allowall"         +"\t\t" +"Allow all sites                               (default: "+booleanAsString(allowall)+")\n"+
+			      "\t"+"--allowallMQ"       +"\t\t" +"Allow all sites but still filter on MQ        (default: "+booleanAsString(allowallMQ)+")\n");
+
+
+
 			      //"\t"+"--minPL  [pl]" +"\t\t"+"Use this as the minimum difference of PL values instead of GQ    (default: "+stringify(minPLdiffind)+")\n"+
 
 			      
@@ -99,6 +107,18 @@ int main (int argc, char *argv[]) {
 	    continue;
 	}
 
+	if(strcmp(argv[i],"--allowall") == 0 ){
+	    allowall     =true;
+	    continue;
+	}
+
+	if(strcmp(argv[i],"--allowallMQ") == 0 ){
+	    allowallMQ     =true;
+	    continue;
+	}
+
+	cerr<<"Wrong option "<<argv[i]<<endl;
+	return 1;
     }
 
     filtersVCF= new SetVCFFilters (minGQcutoff          ,
@@ -109,7 +129,8 @@ int main (int argc, char *argv[]) {
 				   !allowSysErr         ,
 				   minCovcutoff      ,
 				   maxCovcutoff  ,
-				   false     );
+				   allowall,
+				   allowallMQ);
     VCFreader vcfr (string(argv[argc-1]),5);
 	// 75060,
 	// 75070,

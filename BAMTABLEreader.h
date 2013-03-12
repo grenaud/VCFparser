@@ -11,6 +11,7 @@
 #include <list>
 #include <fstream> 
 #include <memory> 
+#include <gzstream.h>
 
 #include "BAMTableObj.h"
 #include "ReadTabix.h"
@@ -71,7 +72,7 @@ private:
     bool tabixMode;
     bool textMode;
 
-    ifstream bmtblFile; //for text mode
+    igzstream bmtblFile; //for text mode
     inline bool getNextLine();
     BAMTableObj * btoToReturn;
     inline void flagCpG(BAMTableObj * previous,BAMTableObj * current);

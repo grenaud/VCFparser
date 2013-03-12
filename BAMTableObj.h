@@ -57,6 +57,9 @@ public:
 
     //returns true if this record has this allele (A:1,C:2,G:3,T:4)
     bool hasAllele(int indexAlle) const;
+    //returns allele count of this allele (A:1,C:2,G:3,T:4)
+    int countAllele(int indexAlle) const;
+
     //! Determines if a BAMTable record only has no other alleles than these two indices (A:1,C:2,G:3,T:4)
     bool hasOnly2Alleles(int firstIndex,int secondIndex) const;
     //! Determines if a BAMTable record only has no other alleles than this index (A:1,C:2,G:3,T:4)

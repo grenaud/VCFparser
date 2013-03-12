@@ -68,10 +68,28 @@ bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
     }
     
 
+    //rejecting unknown genotype (GT= ./.)
+    if(smvcf->isUnresolvedGT() ){ 
+	rejectREF_unknownGeno++; 
+	return false; 
+    }
 
     //if the SetVCFFilters says that we do not filter beyond that, return true
     if(filtersToUse->getDonotFilter()){
 	return true;
+    }
+
+    if(filtersToUse->getDonotFilterButMQ()){//just need to check MQ field
+	
+	double minMQ=smvcf->getInfoField<double>("MQ");
+		    
+	if(minMQ < filtersToUse->getMinMQcutoff()){
+	    rejectLOWMQ++;
+	    return false;
+	}else{
+	    return true;
+	}
+
     }
 
 
@@ -133,9 +151,6 @@ bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
 
 		    
 		    
-    //rejecting unknown genotype (GT= ./.)
-    if(smvcf->isUnresolvedGT() ){ rejectREF_unknownGeno++; 
-	return false; }
 
     //Check the info fields at the end
     //Because the info fields are not parsed automatically

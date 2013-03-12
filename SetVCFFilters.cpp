@@ -15,7 +15,8 @@ SetVCFFilters::SetVCFFilters(int    minGQcutoff         ,
 			     bool   systemError         ,    
 			     int    minCovcutoff        ,
 			     int    maxCovcutoff        ,
-			     bool   donotFilter){
+			     bool   donotFilter,
+			     bool   donotFilterButMQ){
     
 
     this->minGQcutoff          = minGQcutoff         ;
@@ -26,6 +27,13 @@ SetVCFFilters::SetVCFFilters(int    minGQcutoff         ,
     this->repeatMasking        = repeatMasking;
     this->systemError          = systemError;
     this->donotFilter          = donotFilter;
+    this->donotFilterButMQ     = donotFilterButMQ;
+
+    if(donotFilter      == true &&
+       donotFilterButMQ == true ){
+	cerr<<"SetVCFFilters: Cannot specify to allow all sites and allow all but condition on MQ"<<endl;
+	exit(1);
+    }
 
     if(minCovcutoff < 0 ){
 	cerr<<"SetVCFFilters: Cannot have a negative minimum cutoff"<<endl;
@@ -92,4 +100,8 @@ int  SetVCFFilters::getMaxCovcutoff() const {
 
 bool SetVCFFilters::getDonotFilter() const {
     return donotFilter;
+}
+
+bool SetVCFFilters::getDonotFilterButMQ() const {
+    return donotFilterButMQ;
 }

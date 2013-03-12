@@ -40,7 +40,7 @@ int main (int argc, char *argv[]) {
     }
 
     vector<BAMTABLEreader* > btrvec;
-
+    unsigned int total=0;
 
     for(int i=1;i<=(argc-1);i++){
 	//cout<<argv[i]<<endl;
@@ -48,6 +48,7 @@ int main (int argc, char *argv[]) {
 	//     cerr << "File "<<argv[1] <<" is not a file"<<endl;
 	//     return 1;       
 	// }
+       	    cerr << "Using file "<<argv[1] <<""<<endl;
 	BAMTABLEreader * bt =  new BAMTABLEreader(argv[i]);
 	btrvec.push_back( bt  );
     }
@@ -55,21 +56,27 @@ int main (int argc, char *argv[]) {
 
     BAMTableObj   * btObjvec [btrvec.size()];
     bool    haveData [btrvec.size()];
-    
+    string chr;
     //find min coordinate
     int minCoord=-1;
     for(unsigned int i=0;i<btrvec.size();i++){    
 	haveData[i]=btrvec[i]->hasData();
 	if(!haveData[i]){
-	    cout<<"File "<<argv[i+1]<<" does not have data"<<endl;
-	    return 1;
+	    cerr<<"File "<<argv[i+1]<<" does not have data"<<endl;
+	    //return 1;
+	    continue;
 	}
 	btObjvec[i]=btrvec[i]->getData();
 	if(i==0){
 	    minCoord=btObjvec[i]->getPosition();
+	    chr    =btObjvec[i]->getChr();
 	}else{
 	    if(int(btObjvec[i]->getPosition())<minCoord ){
 		minCoord=int(btObjvec[i]->getPosition());
+		if(chr   != btObjvec[i]->getChr()){
+		    cout<<"File "<<argv[i+1]<<" has a different chr"<<endl;
+		    return 1;
+		}
 	    }
 	}
     }
@@ -92,6 +99,10 @@ int main (int argc, char *argv[]) {
 		    haveData[i]=btrvec[i]->hasData();
 		    if(haveData[i]){
 			btObjvec[i]=btrvec[i]->getData();
+			if(chr   != btObjvec[i]->getChr()){
+			    cout<<"File "<<argv[i+1]<<" has a different chr"<<endl;
+			    return 1;
+			}
 		    }
 
 		}
@@ -101,8 +112,10 @@ int main (int argc, char *argv[]) {
 
 	if(!hasAtLeastOneWithData)
 	    break;
-	if(entered)
+	if(entered){
 	    cout<<concat<<endl;
+	    total++;
+	}
 	// return 1;
 
 	currentCoord++;
@@ -110,7 +123,7 @@ int main (int argc, char *argv[]) {
     }
 
 
-    
+    cerr<<"Terminated gracefully, wrote "<<total<<" records "<<endl;
     
     return 0;
 }

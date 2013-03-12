@@ -472,7 +472,7 @@ pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) cons
 
 
 char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
-    
+
     if(unresolvedGT)
 	return 'X'; //unresolved
 

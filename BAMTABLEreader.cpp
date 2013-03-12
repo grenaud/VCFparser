@@ -33,7 +33,7 @@ BAMTABLEreader::BAMTABLEreader(string file,int indelsAhead){
     btoToReturn=0;
 
     bmtblFile.open(file.c_str(), ios::in);    // open the streams
-    if (bmtblFile.is_open()) {
+    if (bmtblFile.good()) {
 	//fine
     }else{
 	cerr<<"Unable to open the file "<<file<<endl;

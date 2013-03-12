@@ -16,14 +16,14 @@ ReadTabix::ReadTabix(string file,string indexForFile,string chrName,int start,in
     }
 
     if(!isFile(indexForFile)){
-	cerr<<"File "<<file<<" does not exist"<<endl;
+	cerr<<"File "<<indexForFile<<" does not exist"<<endl;
 	exit(1);
     }
 
 
     fpTab=ti_open(file.c_str(),indexForFile.c_str());	       
 
-    // -1 is substracted from the start because, for some reason that is unknown to me
+    // -1 is substracted from the start because, for some reason that is unknown to me (probably for BED coordinates)
     // Heng Li does that in index.c in int ti_parse_region(const ti_index_t *idx, const char *str, int *tid, int *begin, int *end)
     // to the get the coordinates right
     // I do this for consistency with the command line program   
