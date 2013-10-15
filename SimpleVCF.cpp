@@ -8,16 +8,27 @@
 #include "SimpleVCF.h"
 //static unsigned int limitToReOpenFP = 200; //if the coordinate is this far away, we will re-open the file pointer
 
-SimpleVCF::SimpleVCF(){
-
+SimpleVCF::SimpleVCF(string line){
+    //trimWhiteSpacesBothEnds	(&line);
+    vector<string> fields=allTokens(line,'\t');
+    corevcf = new CoreVCF(fields);
+    // cerr<<"Ok "<<endl;
+    init(fields,corevcf);
+    // cerr<<"Ok "<<endl;
 }
 
-SimpleVCF::SimpleVCF(string line){
+
+SimpleVCF::SimpleVCF(const vector<string> & fields, CoreVCF *  corevcf_,bool deleteCore_):corevcf(corevcf_),deleteCore(deleteCore_){ //string line){
+    init(fields,corevcf_);
+}
+
+void SimpleVCF::init(const vector<string> & fields, CoreVCF *  corevcf_){ //string line){
+
+
     unresolvedGT=false;
     homozygousREF=false;
     heterozygous=false;
     homozygousALT=false;
-    closeIndel=false;
 
     indexGenotype=-1; 
     indexGenotypeQual=-1; 
@@ -26,56 +37,29 @@ SimpleVCF::SimpleVCF(string line){
 
     typeOfData=1;
 
-    //cout<<"SimpleVCF "<<line<<endl;
-    fields=allTokens(line,'\t');
 
-
-    chrName=                     fields[0];
-    position=string2uint(        fields[1]);
-
-    id     =                     fields[2];
-
-    ref    =                     fields[3];
-    alt    =                     fields[4];
-
-    //for sites with multiple alt bases
-    altAlleles      =     allTokens(alt,',');
-    allAltResolvedSingleBasePair=true;
-    for(unsigned int i=0;i<altAlleles.size();i++){
-	allAltResolvedSingleBasePair&=validAltBP( altAlleles[i] ); //true if ref = A,C,G,T or .
-    }
+    // fields=allTokens(line,'\t');
+    // corevcf = corevcf_;
     
-    
-    //boolean flags for insert
-    isIndel=isInsert(ref) || isInsert(alt);
-    //boolean flags for a single bp in ref or alt
-    resolvedSingleBasePairREF=validOneBP(ref); //true if ref = A,C,G or T
-    resolvedSingleBasePairALT=validAltBP(alt); //true if ref = A,C,G,T or .
-
-    if(fields[5] == "."){
-	qual=0.0;
-    }else{
-	qual   = destringify<float>( fields[5] );
-    }
-    filter =                     fields[6];
-
-
-    //INFO FIELD
-    infoFieldRaw =        fields[7] ;
-    haveInfoField=false;
-    
-
+    int fieldIndex  = corevcf->getFieldIndexAndIncrease();
+    // cerr<<"fieldIndex "<<fieldIndex<<endl;
 
     //FORMAT FIELDS
-    rawFormatNames  = fields[8];
-    rawFormatValues = fields[9];
+    rawFormatNames  = fields[ corevcf->getFieldIndexINFO()+1 ];
+    rawFormatValues = fields[fieldIndex];
+
+    // cerr<<"rawFormatNames  "<<rawFormatNames<<endl;
+    // cerr<<"rawFormatValues "<<rawFormatValues<<endl;
+
     formatFieldNames  = allTokens(rawFormatNames ,':');
     formatFieldValues = allTokens(rawFormatValues,':');
     
     if(formatFieldNames.size() != formatFieldValues.size()){
-	cerr<<"SimpleVCF: for line "<<line<<" the format field does not have as many fields as the values"<<endl;
+	cerr<<"SimpleVCF: for line "<<vectorToString(fields,"\t")<<" the format field does not have as many fields as the values"<<endl;
 	exit(1);
     }
+    observedPL=false;
+    observedGL=false;
 
     for(unsigned int i=0;i<formatFieldNames.size();i++){
 	//cout<<"formatFieldNames["<<i<<"] "<<formatFieldNames[i]<<" = "<<formatFieldValues[i]<<endl;
@@ -84,14 +68,24 @@ SimpleVCF::SimpleVCF(string line){
 	    formatFieldGT=                   formatFieldValues[i]; 
 	    bool determinedGenotype=false;
 	    //Taken from http://www.broadinstitute.org/gatk/guide/topic?name=intro
-	    if(formatFieldGT == "./."){ determinedGenotype=true; unresolvedGT=true; }
-	    if(formatFieldGT == "0/0"){ determinedGenotype=true; homozygousREF=true; }
-	    if(formatFieldGT == "0/1"){ determinedGenotype=true; heterozygous=true; }
-	    if(formatFieldGT == "1/1"){ determinedGenotype=true; homozygousALT=true; }
-	    if(formatFieldGT == "1/2"){ determinedGenotype=true; heterozygousALT=true; }
+	    if(formatFieldGT == "./."){ determinedGenotype=true; unresolvedGT=true;    }
+
+	    if(formatFieldGT == "0/0"){ determinedGenotype=true; homozygousREF=true;   }
+	    if(formatFieldGT == "0|0"){ determinedGenotype=true; homozygousREF=true;   }
+
+	    if(formatFieldGT == "0/1"){ determinedGenotype=true; heterozygous=true;    }
+	    if(formatFieldGT == "0|1"){ determinedGenotype=true; heterozygous=true;    }
+	    if(formatFieldGT == "1|0"){ determinedGenotype=true; heterozygous=true;    }
+
+
+	    if(formatFieldGT == "1/1"){ determinedGenotype=true; homozygousALT=true;   }
+	    if(formatFieldGT == "1|1"){ determinedGenotype=true; homozygousALT=true;   }
+
+	    if(formatFieldGT == "1/2"){ determinedGenotype=true; heterozygousALT=true; } //has first alt and second alt
+	    if(formatFieldGT == "0/2"){ determinedGenotype=true; heterozygous2ndALT=true; } //has ref       and second alt
 
 	    if(!determinedGenotype){
-		cerr<<"SimpleVCF: unable to determine genotype for line "<<line<<""<<endl;
+		cerr<<"SimpleVCF: unable to determine genotype for line "<<vectorToString(fields,"\t")<<""<<endl;
 		exit(1);
 	    }
 	    continue;
@@ -99,17 +93,80 @@ SimpleVCF::SimpleVCF(string line){
 
 	if(formatFieldNames[i] == "GQ"){ indexGenotypeQual =i; formatFieldGQ=destringify<float>(formatFieldValues[i]); continue; }
 	if(formatFieldNames[i] == "DP"){ indexDepth        =i; formatFieldDP=destringify<int>  (formatFieldValues[i]); continue;}
+
+	if(formatFieldNames[i] == "GL"){ 
+	    observedGL=true;
+	    if(observedPL){
+		cerr<<"SimpleVCF: cannot observed both GL and PL "<<vectorToString(fields,"\t")<<""<<endl;
+		exit(1);
+	    }
+
+	    indexPL        = i; 
+	    formatFieldGL  = formatFieldValues[i];
+	    vector<string> glfields = allTokens(formatFieldGL,',');
+
+	    if(glfields.size() == 3){ //biallelic
+
+		formatFieldPLHomoRef =  int(-10.0*destringify<double>(glfields[0]));
+		formatFieldPLHetero  =  int(-10.0*destringify<double>(glfields[1]));
+		formatFieldPLHomoAlt =  int(-10.0*destringify<double>(glfields[2]));
+
+	    }else{
+		if(glfields.size() == 6){ //triallelic
+		    //according to VCF docs it has the following order AA,AB,BB,AC,BC,CC
+		    formatFieldPLHomoRef  =  int(-10.0*destringify<double>(glfields[0])); //r-r
+
+		    formatFieldPLHetero1  =  int(-10.0*destringify<double>(glfields[1])); //r-a1
+		    formatFieldPLHomoAlt1 =  int(-10.0*destringify<double>(glfields[2])); //a1-a1
+
+		    formatFieldPLHetero2  =  int(-10.0*destringify<double>(glfields[3])); //r-a2
+
+		    formatFieldPLHetero12 =  int(-10.0*destringify<double>(glfields[4])); //a1-a2
+		    formatFieldPLHomoAlt2 =  int(-10.0*destringify<double>(glfields[5])); //a2-a2
+
+		}else{
+		    cerr<<"SimpleVCF: for line "<<vectorToString(fields,"\t")<<" the GL field does not have 3 or 6 fields"<<endl;
+		    exit(1);
+		}
+	    }
+	}
+
+
 	if(formatFieldNames[i] == "PL"){ 
+	    observedPL=true;
+
+	    if(observedGL){
+		cerr<<"SimpleVCF: cannot observed both GL and PL "<<vectorToString(fields,"\t")<<""<<endl;
+		exit(1);
+	    }
+
 	    indexPL        = i; 
 	    formatFieldPL  = formatFieldValues[i];
 	    vector<string> plfields = allTokens(formatFieldPL,',');
-	    if(plfields.size() != 3){
-		cerr<<"SimpleVCF: for line "<<line<<" the PL field does not have 3 fields"<<endl;
-		exit(1);
+
+	    if(plfields.size() == 3){ //biallelic
+		formatFieldPLHomoRef =  destringify<int>(plfields[0]);
+		formatFieldPLHetero  =  destringify<int>(plfields[1]);
+		formatFieldPLHomoAlt =  destringify<int>(plfields[2]);
+
+	    }else{
+		if(plfields.size() == 6){ //triallelic
+		    //according to VCF docs it has the following order AA,AB,BB,AC,BC,CC
+		    formatFieldPLHomoRef  =  destringify<int>(plfields[0]); //r-r
+
+		    formatFieldPLHetero1  =  destringify<int>(plfields[1]); //r-a1
+		    formatFieldPLHomoAlt1 =  destringify<int>(plfields[2]); //a1-a1
+
+		    formatFieldPLHetero2  =  destringify<int>(plfields[3]); //r-a2
+
+		    formatFieldPLHetero12 =  destringify<int>(plfields[4]); //a1-a2
+		    formatFieldPLHomoAlt2 =  destringify<int>(plfields[5]); //a2-a2
+
+		}else{
+		    cerr<<"SimpleVCF: for line "<<vectorToString(fields,"\t")<<" the PL field does not have 3 or 6 fields"<<endl;
+		    exit(1);
+		}
 	    }
-	    formatFieldPLHomoRef =  destringify<int>(plfields[0]);
-	    formatFieldPLHetero  =  destringify<int>(plfields[1]);
-	    formatFieldPLHomoAlt =  destringify<int>(plfields[2]);
 	    continue;
 	}
 
@@ -155,65 +212,32 @@ SimpleVCF::SimpleVCF(string line){
     // cout<<getADforG()<<endl;
     // cout<<getADforT()<<endl;
 
-    // cout<<"end"<<endl;
+    // cerr<<"end"<<endl;
 
 }
 
 SimpleVCF::~SimpleVCF(){
-    // cout<<"DESTRUCTOR SimpleVCF"<<endl;
+
+    ///cout<<"DESTRUCTOR SimpleVCF"<<endl;
+    if(deleteCore){
+	//cout<<"delete CORE"<<endl;
+	delete corevcf;
+    }
     // delete  altAlleles;
     // delete  fields;
     // delete  infoField;
     // delete formatFieldNames;
     // delete formatFieldValues;
     //exit(1);
-    if(haveInfoField)
-	delete infoField;
-}
-
-void SimpleVCF::parseInfoFields(){
-    haveInfoField=true;
-    infoField    =        info2map( infoFieldRaw );
-
-
-
-}
-
-string SimpleVCF::getRef() const{
-    return ref;
-}
-
-string SimpleVCF::getAlt() const{
-    return alt;
-}
-
-string SimpleVCF::getID() const{
-    return id;
-}
-
-string SimpleVCF::getChr() const{
-    return chrName;
-}
-
-unsigned int SimpleVCF::getPosition() const{
-    return position;
-}
-
-string  SimpleVCF::getFilter() const{
-    return filter;
-}
-
-string SimpleVCF::getInfoFieldRaw() const{
-    return infoFieldRaw;
+    // if(haveInfoField)
+    // 	delete infoField;
 }
 
 
-bool   SimpleVCF::hasInfoField(string tag) {
-    if(!haveInfoField){ parseInfoFields(); }
-    return (infoField->find(tag)  != infoField->end());
+
+CoreVCF * SimpleVCF::getCorevcf(){
+    return corevcf;
 }
-
-
 
 
 
@@ -240,16 +264,6 @@ int     SimpleVCF::getDepth() const{
     }else{
 	return -1;
     }
-}
-
-int     SimpleVCF::getDepthInfo() {
-    if(!haveInfoField){ parseInfoFields(); }
-
-    if(hasInfoField("DP")){
-	int toReturn = getInfoField<int>("DP");
-	return toReturn;
-    }
-    return -1;
 }
 
 string  SimpleVCF::getPL() const{
@@ -286,30 +300,17 @@ int     SimpleVCF::getPLHomoAlt() const{
 
 
 
-float     SimpleVCF::getQual() const{
-    return qual;
-}
-
-void    SimpleVCF::setCloseIndel(bool closeIndel){
-    this->closeIndel=closeIndel;
-}
-
-bool SimpleVCF::getCloseIndel() const{
-    return closeIndel;
-}
-
-
 bool SimpleVCF::containsIndel() const{
-    return isIndel;
+    return corevcf->isIndel;
 }
 
 
 bool    SimpleVCF::isResolvedSingleBasePairREF() const{
-    return resolvedSingleBasePairREF;
+    return corevcf->resolvedSingleBasePairREF;
 }
 
 bool    SimpleVCF::isResolvedSingleBasePairALT() const{
-    return resolvedSingleBasePairALT;
+    return corevcf->resolvedSingleBasePairALT;
 }
 
 
@@ -333,15 +334,32 @@ bool SimpleVCF::isHeterozygousALT() const{
     return heterozygousALT;
 }
 
+bool SimpleVCF::hasInfoField(string tag) { return corevcf->hasInfoField(tag); } 
+int SimpleVCF::getDepthInfo()  { return corevcf->getDepthInfo(); } 
+string SimpleVCF::getRef() const { return corevcf->getRef(); } 
+string SimpleVCF::getAlt() const { return corevcf->getAlt(); } 
+string SimpleVCF::getID() const { return corevcf->getID(); } 
+string SimpleVCF::getChr() const { return corevcf->getChr(); } 
+unsigned int SimpleVCF::getPosition() const { return corevcf->getPosition(); } 
+string SimpleVCF::getFilter() const { return corevcf->getFilter(); } 
+string SimpleVCF::getInfoFieldRaw() const { return corevcf->getInfoFieldRaw(); } 
+float SimpleVCF::getQual() const { return corevcf->getQual(); } 
+void SimpleVCF::setCloseIndel(bool closeIndel) { corevcf->setCloseIndel(closeIndel); } 
+bool SimpleVCF::getCloseIndel() const { return corevcf->getCloseIndel(); } 
+
+bool SimpleVCF::isHeterozygous2ndALT() const{
+    return heterozygous2ndALT;
+}
+
 char SimpleVCF::getRandomAllele() const{
-    if( homozygousREF ){ return ref[0]; }
-    if( homozygousALT ){ return alt[0]; }
+    if( homozygousREF ){ return corevcf->ref[0]; }
+    if( homozygousALT ){ return corevcf->alt[0]; }
     if( heterozygous ){ 
 	//pick an allele at random
 	if(randomBool())
-	    return ref[0]; 
+	    return corevcf->ref[0]; 
 	else
-	    return alt[0]; 
+	    return corevcf->alt[0]; 
     }
     //error
     //should we allow heterozygous alt ?
@@ -364,13 +382,13 @@ void SimpleVCF::print(ostream& os) const{
     //   <<smvcf.rawFormatNames<<"\t"
     //   <<smvcf.rawFormatValues;
 
-    os<<chrName<<"\t"
-      <<position<<"\t"
-      <<ref<<"\t"
-      <<alt<<"\t"
-      <<qual<<"\t"
-      <<filter<<"\t"
-      <<infoFieldRaw<<"\t"
+    os<<corevcf->chrName<<"\t"
+      <<corevcf->position<<"\t"
+      <<corevcf->ref<<"\t"
+      <<corevcf->alt<<"\t"
+      <<corevcf->qual<<"\t"
+      <<corevcf->filter<<"\t"
+      <<corevcf->infoFieldRaw<<"\t"
       <<rawFormatNames<<"\t"
       <<rawFormatValues;
 
@@ -381,11 +399,11 @@ void SimpleVCF::print(ostream& os) const{
 
 bool SimpleVCF::isThisAllelePresent(char bp) const {
 
-    if(resolvedSingleBasePairREF && resolvedSingleBasePairALT){ //only look at sites with a single bp
-	if( homozygousREF ){ return (ref[0] == bp); }
-	if( homozygousALT ){ return (alt[0] == bp); }
+    if(corevcf->resolvedSingleBasePairREF && corevcf->resolvedSingleBasePairALT){ //only look at sites with a single bp
+	if( homozygousREF ){ return (corevcf->ref[0] == bp); }
+	if( homozygousALT ){ return (corevcf->alt[0] == bp); }
 	if( heterozygous ){ 
-	    return ( (ref[0] == bp) || (alt[0] == bp));
+	    return ( (corevcf->ref[0] == bp) || (corevcf->alt[0] == bp));
 	}
     } 
     return false;
@@ -422,8 +440,37 @@ bool SimpleVCF::hasAllele(int indexAlle) const  {
 
 }
 
+string SimpleVCF::getAlleCountBasedOnGT() const{
+    string toreturn;
+    if(unresolvedGT)
+	toreturn="0,0";
+    else{
+	if(homozygousREF)
+	    toreturn="2,0";
+	else{
+	    if(heterozygous)
+		toreturn="1,1";
+	    else{
+		if(homozygousALT)
+		    toreturn="0,2";
+		else{
+		    cerr<<"SimpleVCF:getAlleCountBasedOnGT() unresolved genotype"<<endl;
+		    exit(1);
+		}
+	    }
+	}
+    }
+    //if(formatFieldGT == "1|1"){ determinedGenotype=true; homozygousALT=true;   
+    toreturn=toreturn+":"+(this->isCpg()?"1":"0");
+    return toreturn;
+}
+
 
 pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) const{
+    // if(!observedPL){
+    // 	cerr<<"SimpleVCF: returnLikelyAlleleCountForRefAlt() cannot be called is PL value hasn't been defined for "<<*this<<endl;
+    // 	exit(1);
+    // }
 
     if(unresolvedGT) //unresolved, we cannot infer anything
 	return pair<int,int>(0,0);
@@ -473,32 +520,37 @@ pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) cons
 
 char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
 
+    // if(!observedPL){
+    // 	cerr<<"SimpleVCF: getRandomAlleleUsingPL() cannot be called is PL value hasn't been defined for "<<*this<<endl;
+    // 	exit(1);
+    // }
+
     if(unresolvedGT)
 	return 'X'; //unresolved
 
     if ( (formatFieldPLHetero-formatFieldPLHomoRef) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHomoRef) >= minPLdiffind) {  //high likelihood of homo ref, produce 2 alleles ref
 	// cout<<position<<"\t"<<"2,0"<<endl;
-	return ref[0];
+	return corevcf->ref[0];
     } else{
 	if ((formatFieldPLHetero-formatFieldPLHomoAlt) >= minPLdiffind && (formatFieldPLHomoRef-formatFieldPLHomoAlt) >= minPLdiffind) {  //high likelihood of homo alt, produce 2 alleles alt
 	    // cout<<position<<"\t"<<"0,2"<<endl;
-	    return alt[0];
+	    return corevcf->alt[0];
 	} else {
 	    if ((formatFieldPLHomoRef-formatFieldPLHetero) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHetero) >= minPLdiffind) { //high likelihood of hetero, produce 1 allele of each
 		// cout<<position<<"\t"<<"1,1"<<endl;
 		if(randomBool())
-		    return ref[0]; 
+		    return corevcf->ref[0]; 
 		else
-		    return alt[0]; 
+		    return corevcf->alt[0]; 
 
 	    }else{
 		if ((formatFieldPLHomoRef-formatFieldPLHomoAlt) >= minPLdiffind && (formatFieldPLHetero-formatFieldPLHomoAlt) <minPLdiffind ) { //high likelihood of at least one alt, produce 1 allele alt 
 		    // cout<<position<<"\t"<<"0,1"<<endl;
-		    return alt[0];
+		    return corevcf->alt[0];
 		}else{
 		    if ( (formatFieldPLHomoAlt-formatFieldPLHomoRef) >= minPLdiffind && (formatFieldPLHetero-formatFieldPLHomoRef) < minPLdiffind ) { // high likelihood of at least one ref, produce 1 allele ref
 			// cout<<position<<"\t"<<"1,0"<<endl;
-			return ref[0]; 
+			return corevcf->ref[0]; 
 		    }else{
 			return 'X'; //unresolved
 		    }

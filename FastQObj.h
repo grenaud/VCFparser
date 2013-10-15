@@ -27,8 +27,11 @@ public:
     
     string * getSeq() const;
     string *  getID() const;
+    void setID(const string  newID);
+
     string * getQual() const;
-    
+    void printFastaSeqWithBreaks(ostream & stro) const;
+
     friend ostream& operator<<(ostream& str, FastQObj const& fqo){
 	if(fqo.isFasta)
 	    str<<*(fqo.id)<<endl<<*(fqo.seq);

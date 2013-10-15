@@ -30,5 +30,7 @@ class ReadTabix{
     ~ReadTabix();
     bool readLine(string & line);
     void repositionIterator(string chrName,int start,int end);
+    string getHeader();
+    
 };
 #endif

@@ -25,7 +25,7 @@ static unsigned int limitToReOpenFP = 200; //if the coordinate is this far away,
 using namespace std;
 
 
-void setVarsEPO(ReadTabix * rtEPO,string & epoChr,unsigned int & epoCoord,bool & cpgEPO,char & allel_chimp, bool & lineLeftEPO,string & lineFromEPO,const bool ancAllele){
+void setVarsEPO(ReadTabix * rtEPO,string & epoChr,unsigned int & epoCoord,bool & cpgEPO,char & allel_chimp,char & allel_anc,bool & lineLeftEPO,string & lineFromEPO){
 
     lineLeftEPO=(rtEPO->readLine( lineFromEPO ));
     if(!lineLeftEPO){
@@ -40,11 +40,12 @@ void setVarsEPO(ReadTabix * rtEPO,string & epoChr,unsigned int & epoCoord,bool &
 	cpgEPO=true;		    
     else
 	cpgEPO=false;		    
-    if(ancAllele){
-	allel_chimp = fieldsEPO[3][0];//inferred ancestor
-    }else{
-	allel_chimp = fieldsEPO[4][0];//chimp;
-    }
+
+
+
+    allel_anc   = fieldsEPO[3][0];//inferred ancestor
+    allel_chimp = fieldsEPO[4][0];//chimp;
+
 
 }
 
@@ -64,7 +65,7 @@ int main (int argc, char *argv[]) {
     bool allowall            = false;
     bool allowallMQ          = false;
 
-    bool ancAllele           = false;
+    // bool ancAllele           = false;
 
     double     minMapabilitycutoff =0;
 
@@ -77,7 +78,7 @@ int main (int argc, char *argv[]) {
 			      "\t"+"--minMap [minmap]" +"\t"+"Minimal mapability (default: "+stringify(minMapabilitycutoff)+")\n"+
 	
 			      "\t"+"--minPL [pl]"       +"\t\t" +"Use this as the minimum difference of PL values for alleles      (default: "+stringify(minPLdiffind)+")\n"+ 
-			      "\t"+"--useanc"           +"\t\t" +"Use inferred ancestor instead of chimp      (default: "+stringify(ancAllele)+")\n"+ 
+			      // "\t"+"--useanc"           +"\t\t" +"Use inferred ancestor instead of chimp      (default: "+stringify(ancAllele)+")\n"+ 
 
 			      "\t"+"--allowindel"       +"\t\t" +"Allow sites considered within 5bp of an indel (default: "+booleanAsString(allowCloseIndelProx)+")\n"+
 			      "\t"+"--allowrm"          +"\t\t" +"Allow sites labeled repeat masked             (default: "+booleanAsString(allowRepeatMasking)+")\n"+
@@ -162,10 +163,10 @@ int main (int argc, char *argv[]) {
 	    continue;
 	}
 
-	if(strcmp(argv[i],"--useanc") == 0 ){
-	    ancAllele       =true;
-	    continue;
-	}
+	// if(strcmp(argv[i],"--useanc") == 0 ){
+	//     ancAllele       =true;
+	//     continue;
+	// }
 
 	cerr<<"Wrong option "<<argv[i]<<endl;
 	exit(1);
@@ -188,7 +189,7 @@ int main (int argc, char *argv[]) {
     string epoFile  = string(argv[argc-1]);
     string epoFileidx = epoFile+".tbi";
 
-    cerr<<"VCF file "<<(string(argv[argc-3]),5)<<endl;
+    cerr<<"VCF file "<<(string(argv[argc-3]))<<endl;
     cerr<<"Name pop "<<(string(argv[argc-2]))<<endl;
     cerr<<"EPO file "<<(string(argv[argc-1]))<<endl;
 
@@ -225,11 +226,23 @@ int main (int argc, char *argv[]) {
     bool cpgEPO=false;
     bool firstLine=true;
     char allel_chimp;
+    char allel_anc;
 
     // 75060,
     // 75070,
     // 5);
-    cout<<"#chr\tcoord\tREF,ALT\troot\t"<<namePop<<endl;
+    cout<<"#MISTAR"<<endl;    
+    string programLine;
+    for(int i=0;i<(argc);i++){ 
+	programLine+=(string(argv[i])+" ");
+    }
+    cout<<"#PG:"<<programLine<<endl;
+    cout<<"#GITVERSION: "<<returnGitHubVersion(argv[0],"")<<endl;
+    cout<<"#DATE: "<<getDateString()<<endl;
+    
+
+    cout<<"#chr\tcoord\tREF,ALT\troot\tanc\t"<<namePop<<endl;
+    //cout<<"#chr\tcoord\tREF,ALT\troot\t"<<namePop<<endl;
 
     while(vcfr.hasData()){
     	SimpleVCF * toprint=vcfr.getData();
@@ -244,7 +257,7 @@ int main (int argc, char *argv[]) {
 				       epoFileidx.c_str()  , 
 				       toprint->getChr(), 
 				       int(toprint->getPosition()),INT_MAX ); //the destructor should be called automatically
-		setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_chimp,lineLeftEPO,lineFromEPO,ancAllele);
+		setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_chimp,allel_anc,lineLeftEPO,lineFromEPO);
 
 		// lineLeftEPO=(rtEPO->readLine( lineFromEPO ));
 		// vector<string> fieldsEPO = allTokens(lineFromEPO,'\t');
@@ -284,7 +297,8 @@ int main (int argc, char *argv[]) {
                     rtEPO->repositionIterator(toprint->getChr() , int(toprint->getPosition()),INT_MAX);
                 }
 
-		setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_chimp,lineLeftEPO,lineFromEPO,ancAllele);
+
+		setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_chimp,allel_anc,lineLeftEPO,lineFromEPO);
 		// lineLeftEPO=(rtEPO->readLine( lineFromEPO ));
 		// vector<string> fieldsEPO = allTokens(lineFromEPO,'\t');
 		// epoChr                   = fieldsEPO[0];
@@ -314,6 +328,7 @@ int main (int argc, char *argv[]) {
 	    if(pairCount.first != 0 || pairCount.second != 0 ){
 		char alt=(toprint->getAlt()=="."?'N':toprint->getAlt()[0]);
 		string chimpString;
+		string ancString;
 		
 		// cout<<allel_chimp<<"\t"<<toprint->getRef()[0]<<endl;
 		
@@ -327,23 +342,48 @@ int main (int argc, char *argv[]) {
 		    if(allel_chimp == toprint->getRef()[0]){//no diff between chimp and reference
 			chimpString="1,0:"+string(cpgEPO?"1":"0");
 		    }else{
-			if(alt == 'N'){//no alt defined, the chimp becomes the alt
-			    
+			if(alt == 'N'){//no alt defined, the chimp becomes the alt			    
 			    alt = allel_chimp;
 			    chimpString="0,1:"+string(cpgEPO?"1":"0");
 			}else{
-			    if(alt == allel_chimp){//no alt defined, the chimp becomes the alt
+			    if(alt == allel_chimp){//alt is chimp
 				chimpString="0,1:"+string(cpgEPO?"1":"0");
 			    }else{ //tri-allelic site, discard
 				continue;
 			    }
 			}
 		    }
-		}				   
+		}
+
+
+		if(!isResolvedDNA(allel_anc)){
+		    ancString="0,0:0";					
+		}
+		//resolved ancestral allele
+		else{
+		    if(allel_anc == toprint->getRef()[0]){//no diff between ancestor and reference
+			ancString="1,0:"+string(cpgEPO?"1":"0");
+		    }else{
+			if(alt == 'N'){//no alt defined, the ancestor becomes the alt			    
+			    alt = allel_anc;
+			    ancString="0,1:"+string(cpgEPO?"1":"0");			    
+			}else{
+			    if(alt == allel_anc){//alt is ancestor
+				ancString="0,1:"+string(cpgEPO?"1":"0");
+			    }else{ //tri-allelic site, discard
+				continue;
+			    }
+			}
+		     }
+		}
+
+		
+
 		cout<<toprint->getChr()<<"\t"<< toprint->getPosition()<<"\t"<<
 		    toprint->getRef()<<","<<
 		    alt<<"\t"<<
 		    chimpString<<"\t"<<
+		    ancString<<"\t"<<
 		    pairCount.first<<","<<pairCount.second<<":"<<(toprint->isCpg()?"1":"0")<<endl;	
 	    }
 	    //<<endl;
@@ -354,6 +394,7 @@ int main (int argc, char *argv[]) {
     //epoFileFP.close();
     delete(filtersVCF);
     delete(rtEPO);
+    cerr<<"Program terminated gracefully"<<endl;
     return 0;
 }
 

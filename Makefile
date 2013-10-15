@@ -6,7 +6,7 @@ CXXFLAGS = -Wall -Wunused-variable -lm -O3 -lz -I${LIBGAB} -I${LIBTABIX} -Igzstr
 LDFLAGS  = -lz
 
 
-all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable filterVCF FastQObj.o FastQParser.o testReadFastq SetVCFFilters.o vcf2mistar bamtable2mistar
+all:  ReadTabix.o testReadTabix SimpleVCF.o CoreVCF.o testVCF FilterVCF.o BAMTableObj.o BAMTABLEreader.o AlleleInfoReader.o mergeBAMTable filterVCF FastQObj.o FastQParser.o testReadFastq SetVCFFilters.o vcf2mistar bamtable2mistar affyVCF2mistar 23andme2mistar testMultiReadTabix vcfMulti2mistar
 
 #mergeBAMTable.o:	mergeBAMTable.cpp
 #	${CXX} ${CXXFLAGS} mergeBAMTable.cpp
@@ -14,10 +14,20 @@ all:  ReadTabix.o testReadTabix SimpleVCF.o testVCF FilterVCF.o BAMTableObj.o BA
 mergeBAMTable:	mergeBAMTable.o ${LIBGAB}utils.o BAMTableObj.o BAMTABLEreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a gzstream/gzstream.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-filterVCF:	filterVCF.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
+filterVCF:	filterVCF.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o CoreVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-vcf2mistar:	vcf2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
+vcf2mistar:	vcf2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o CoreVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+vcfMulti2mistar: 	vcfMulti2mistar.o ${LIBGAB}utils.o  MultiVCFreader.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o CoreVCF.o   BAMTableObj.o BAMTABLEreader.o FilterVCF.o SetVCFFilters.o gzstream/gzstream.o
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+
+affyVCF2mistar:	affyVCF2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a  gzstream/gzstream.o
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+23andme2mistar:	23andme2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a  gzstream/gzstream.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 bamtable2mistar:	bamtable2mistar.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a   BAMTableObj.o BAMTABLEreader.o  gzstream/gzstream.o
@@ -63,12 +73,15 @@ testReadFastq: testReadFastq.o FastQObj.o FastQParser.o ${LIBGAB}utils.o gzstrea
 #FilterVCF.o:	FilterVCF.cpp
 #	${CXX} ${CXXFLAGS} FilterVCF.cpp
 
-testVCF:	testVCF.o ${LIBGAB}utils.o SimpleVCF.o FilterVCF.o BAMTableObj.o SetVCFFilters.o
+testVCF:	testVCF.o ${LIBGAB}utils.o SimpleVCF.o CoreVCF.o FilterVCF.o BAMTableObj.o SetVCFFilters.o
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
-testReadTabix:	testReadTabix.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o  gzstream/gzstream.o
+testReadTabix:	testReadTabix.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o CoreVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o  gzstream/gzstream.o 
+	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
+
+testMultiReadTabix: testMultiReadTabix.o MultiVCFreader.o ${LIBGAB}utils.o  ReadTabix.o  ${LIBTABIX}libtabix.a SimpleVCF.o CoreVCF.o VCFreader.o  BAMTableObj.o BAMTABLEreader.o  gzstream/gzstream.o 
 	${CXX}  -o $@ $^ $(LDLIBS) $(LDFLAGS)
 
 clean :
-	rm -f  testReadTabix mergeBAMTable filterVCF testReadFastq bamtable2mistar  vcf2mistar bamtable2mistar *.o
+	rm -f  testReadTabix mergeBAMTable filterVCF testReadFastq bamtable2mistar  vcf2mistar affyVCF2mistar 23andme2mistar bamtable2mistar testMultiReadTabix vcfMulti2mistar *.o 
 

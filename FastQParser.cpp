@@ -47,7 +47,7 @@ bool       FastQParser::hasData(){
 	    return false;
 	}else{	
 	    if(currentline1.length() > 0 && currentline1[0] != '>'){
-		cerr<<"Parse error with line "<<currentline1<<endl;
+		cerr<<"Parse error#1 with line "<<currentline1<<endl;
 		exit(1);
 	    }
 	}
@@ -71,7 +71,7 @@ bool       FastQParser::hasData(){
 	    flag=getline(fastqFile,currentline2);
 
 	    if(!flag){
-		cerr<<"Parse error with line "<<currentline1<<endl;
+		cerr<<"Parse error#2 with line "<<currentline1<<endl;
 		exit(1);
 	    }else{	
 		seq->append(currentline2);		    
@@ -87,7 +87,7 @@ bool       FastQParser::hasData(){
 	    return false;
 	}else{	
 	    if(currentline1.length() > 0 && currentline1[0] != '@'){
-		cerr<<"Parse error with line "<<currentline1<<endl;
+		cerr<<"Parse error#3 with line "<<currentline1<<endl;
 		exit(1);
 	    }
 	}
@@ -95,18 +95,18 @@ bool       FastQParser::hasData(){
 	flag=getline(fastqFile,currentline2);
 
 	if(!flag){
-	    cerr<<"Parse error with line "<<currentline2<<endl;
+	    cerr<<"Parse error#4 with line "<<currentline2<<endl;
 	    exit(1);
 	}
 
 	flag=getline(fastqFile,currentline3);
 
 	if(!flag){
-	    cerr<<"Parse error with line "<<currentline3<<endl;
+	    cerr<<"Parse error#5 with line "<<currentline3<<endl;
 	    exit(1);
 	}else{	
 	    if(currentline3.length() > 0 && currentline3[0] != '+'){
-		cerr<<"Parse error with line "<<currentline3<<endl;
+		cerr<<"Parse error#6 with line "<<currentline3<<endl;
 		exit(1);
 	    }
 	}
@@ -114,7 +114,7 @@ bool       FastQParser::hasData(){
 	flag=getline(fastqFile,currentline4);
 
 	if(!flag){
-	    cerr<<"Parse error with line "<<currentline4<<endl;
+	    cerr<<"Parse error#7 with line "<<currentline4<<endl;
 	    exit(1);
 	}
 

@@ -39,6 +39,26 @@ ReadTabix::~ReadTabix(){
 }
 
 
+string ReadTabix::getHeader(){
+    //adapted from main.c from tabix
+    //cout<<"get header"<<endl;
+    const ti_conf_t *idxconf = ti_get_conf(fpTab->idx);
+    ti_iter_t iter = ti_query(fpTab, 0, 0, 0);
+    const char *s;
+    int len;
+    string toreturn="";
+    while ((s = ti_read(fpTab, iter, &len)) != 0) {
+	if ((int)(*s) != idxconf->meta_char) 
+	    break;
+	//toreturn+=string(s);
+	toreturn.append(s);
+	toreturn.append("\n");
+	//fputs(s, stdout); fputc('\n', stdout);
+    }
+    ti_iter_destroy(iter);
+    return toreturn;
+}
+
 
 void ReadTabix::repositionIterator(string chrName,int start,int end){
     ti_iter_destroy(iteratorTab);

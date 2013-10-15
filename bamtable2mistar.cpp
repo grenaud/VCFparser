@@ -23,7 +23,8 @@ static unsigned int limitToReOpenFP = 200; //if the coordinate is this far away,
 using namespace std;
 
 
-void setVarsEPO(ReadTabix * rtEPO,string & epoChr,unsigned int & epoCoord,bool & cpgEPO,char & allel_ref, char & allel_chimp, bool & lineLeftEPO,string & lineFromEPO,const bool ancAllele){
+
+void setVarsEPO(ReadTabix * rtEPO,string & epoChr,unsigned int & epoCoord,bool & cpgEPO,char & allel_ref,char & allel_chimp,char & allel_anc,bool & lineLeftEPO,string & lineFromEPO){
 
     lineLeftEPO=(rtEPO->readLine( lineFromEPO ));
     if(!lineLeftEPO){
@@ -38,20 +39,19 @@ void setVarsEPO(ReadTabix * rtEPO,string & epoChr,unsigned int & epoCoord,bool &
 	cpgEPO=true;		    
     else
 	cpgEPO=false;		    
-    allel_ref = fieldsEPO[2][0];
 
-    if(ancAllele){
-	allel_chimp = fieldsEPO[3][0];//inferred ancestor
-    }else{
-	allel_chimp = fieldsEPO[4][0];//chimp;
-    }
+
+    allel_ref   = fieldsEPO[2][0];//reference allele
+    allel_anc   = fieldsEPO[3][0];//inferred ancestor
+    allel_chimp = fieldsEPO[4][0];//chimp;
+
 
 }
 
 
 int main (int argc, char *argv[]) {
     // cout<<INT_MAX<<endl;
-    bool ancAllele           = false;
+    // bool ancAllele           = false;
 
     const string usage=string(string(argv[0]) +" [options] <bam table file> <name sample> <EPO alignment file>"+"\n"+
 			      "\nThis program convert bam table  files into mistar (prints to the stdout)\n"+
@@ -60,7 +60,7 @@ int main (int argc, char *argv[]) {
     // "\t"+"--minGQ  [gq]" +"\t\t"+"Minimal genotype quality (default: "+stringify(minGQcutoff)+")\n"+
     // "\t"+"--minMQ  [mq]" +"\t\t"+"Minimal mapping quality (default: "+stringify(minMQcutoff)+")\n"+
     // "\t"+"--minPL [pl]"       +"\t\t\t" +"Use this as the minimum difference of PL values for alleles      (default: "+stringify(minPLdiffind)+")\n"+ 
-    "\t"+"--useanc"           +"\t\t\t" +"Use inferred ancestor instead of chimp      (default: "+stringify(ancAllele)+")\n"+ 
+    // "\t"+"--useanc"           +"\t\t\t" +"Use inferred ancestor instead of chimp      (default: "+stringify(ancAllele)+")\n"+ 
 
     // "\t"+"--allowindel"       +"\t\t" +"Allow sites considered within 5bp of an indel (default: "+booleanAsString(allowCloseIndelProx)+")\n"+
     // "\t"+"--allowrm"          +"\t\t" +"Allow sites labeled repeat masked             (default: "+booleanAsString(allowRepeatMasking)+")\n"+
@@ -82,10 +82,10 @@ int main (int argc, char *argv[]) {
     //last arg is program name
     for(int i=1;i<(argc-3);i++){ 
                                                                                                                                                                                      
-	if(strcmp(argv[i],"--useanc") == 0 ){
-	    ancAllele       =true;
-	    continue;
-	}
+	// if(strcmp(argv[i],"--useanc") == 0 ){
+	//     ancAllele       =true;
+	//     continue;
+	// }
 
 
 	cerr<<"Wrong option "<<argv[i]<<endl;
@@ -132,11 +132,24 @@ int main (int argc, char *argv[]) {
     bool firstLine=true;
     char allel_chimp;
     char allel_ref;
+    char allel_anc;
 
     // 75060,
     // 75070,
     // 5);
-    cout<<"#chr\tcoord\tREF,ALT\troot\t"<<namePop<<endl;
+    //header
+
+    cout<<"#MISTAR"<<endl;    
+    string programLine;
+    for(int i=0;i<(argc);i++){ 
+	programLine+=(string(argv[i])+" ");
+    }
+    cout<<"#PG:"<<programLine<<endl;
+    cout<<"#GITVERSION: "<<returnGitHubVersion(argv[0],"")<<endl;
+    cout<<"#DATE: "<<getDateString()<<endl;
+    
+
+    cout<<"#chr\tcoord\tREF,ALT\troot\tanc\t"<<namePop<<endl;
 
     while(btr.hasData()){
 	BAMTableObj * toprint=btr.getData();
@@ -151,7 +164,9 @@ int main (int argc, char *argv[]) {
 				   epoFileidx.c_str()  , 
 				   toprint->getChr(), 
 				   int(toprint->getPosition()),INT_MAX ); //the destructor should be called automatically
-	    setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_ref,allel_chimp,lineLeftEPO,lineFromEPO,ancAllele);
+
+	    setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_ref,allel_chimp,allel_anc,lineLeftEPO,lineFromEPO);
+
 	}
 
 
@@ -177,7 +192,9 @@ int main (int argc, char *argv[]) {
 		rtEPO->repositionIterator(toprint->getChr() , int(toprint->getPosition()),INT_MAX);
 	    }
 
-	    setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_ref,allel_chimp,lineLeftEPO,lineFromEPO,ancAllele);
+	    
+	    setVarsEPO(rtEPO,epoChr,epoCoord,cpgEPO,allel_ref,allel_chimp,allel_anc,lineLeftEPO,lineFromEPO);
+
 	    // lineLeftEPO=(rtEPO->readLine( lineFromEPO ));
 	    // vector<string> fieldsEPO = allTokens(lineFromEPO,'\t');
 	    // epoChr                   = fieldsEPO[0];
@@ -225,58 +242,65 @@ int main (int argc, char *argv[]) {
 
 	// cout<<*toprint<<endl;
 	// cout<<lineFromEPO<<endl;
+	string chimpString;
+	string ancString;
+		
+
+	//unresolved ancestral allele (A,C,G,T)
+	if(!isResolvedDNA(allel_chimp)){
+	    chimpString="0,0:0";					
+	}
+	//resolved ancestral allele
+	else{
+	    if(allel_chimp == allel_ref){//no diff between chimp and reference
+		chimpString="1,0:"+string(cpgEPO?"1":"0");
+	    }else{
+		if(alt == 'N'){//no alt defined, the chimp becomes the alt			    
+		    alt = allel_chimp;
+		    chimpString="0,1:"+string(cpgEPO?"1":"0");
+		}else{
+		    if(alt == allel_chimp){//alt is chimp
+			chimpString="0,1:"+string(cpgEPO?"1":"0");
+		    }else{ //tri-allelic site, discard
+			continue;
+		    }
+		}
+	    }
+	}
+
+
+	if(!isResolvedDNA(allel_anc)){
+	    ancString="0,0:0";					
+	}
+	//resolved ancestral allele
+	else{
+	    if(allel_anc == allel_ref){//no diff between ancestor and reference
+		ancString="1,0:"+string(cpgEPO?"1":"0");
+	    }else{
+		if(alt == 'N'){//no alt defined, the ancestor becomes the alt			    
+		    alt = allel_anc;
+		    ancString="0,1:"+string(cpgEPO?"1":"0");			    
+		}else{
+		    if(alt == allel_anc){//alt is ancestor
+			ancString="0,1:"+string(cpgEPO?"1":"0");
+		    }else{ //tri-allelic site, discard
+			continue;
+		    }
+		}
+	    }
+	}
+
+
+
+
+
+
+
 
 	if( (alt!='N' && toprint->hasOnly2Alleles(refIdx,base2int(alt)))  || // has alternative
 	    (alt=='N' && toprint->hasOnlyThisAlleles(refIdx)) ){//no alt in bam table
-	    //cout<<"ok "<<alt<<endl;
-	    if( isResolvedDNA(allel_chimp) ){	//chimp allele exists A,C,G,T
 
-		// if(allel_chimp != allel_ref ){ //triallelic with respect to chimp,skip
-		//     cout<<*toprint<<endl;
-		//     cout<<lineFromEPO<<endl;		   
-		// }
-		
-		if(alt!= 'N')
-		    if(allel_chimp != allel_ref && //triallelic with respect to chimp,skip
-		       allel_chimp != alt){
-			continue;
-		    }
-	    
-	    
-		if(alt=='N' && 
-		   allel_chimp != allel_ref){//no alt in bamtable and chimp is different: chimp becomes alt
-		    alt=allel_chimp;
-		     // cout<<*toprint<<endl;
-		     // cout<<lineFromEPO<<endl;
-		    // exit(1);
-		}
-
-
-		cout<<toprint->getChr()<<"\t"<< toprint->getPosition()<<"\t"<<
-		    allel_ref<<","<<
-		    alt<<"\t";
-
-		if(allel_chimp == allel_ref ){
-		    cout<<"1,0:"+string(cpgEPO?"1":"0")<<"\t";
-		}else{ 
-		    if(allel_chimp == alt){
-			cout<<"0,1:"+string(cpgEPO?"1":"0")<<"\t";
-		    }else{
-			cerr<<"Error, wrong state between "<<(*toprint)<<"\t"<<lineFromEPO<<endl;
-			return 1;	
-		    }
-		}
-		int altCount=0;
-		if(alt=='N'){
-		    altCount=0;
-		}else{
-		    altCount=toprint->countAllele(base2int(alt));
-		}
-		cout<<toprint->countAllele(refIdx)<<","<<
-		    altCount<<
-		    ":"<<(toprint->isCpg()?"1":"0")<<endl;
-	    }else{
-		int altCount=0;
+	    int altCount=0;
 		if(alt=='N'){
 		    altCount=0;
 		}else{
@@ -286,15 +310,83 @@ int main (int argc, char *argv[]) {
 		cout<<toprint->getChr()<<"\t"<< toprint->getPosition()<<"\t"<<
 		    allel_ref<<","<<
 		    alt<<"\t"<<
-		    "0,0:"+string(cpgEPO?"1":"0")<<"\t"<<
+		    chimpString<<"\t"<<
+		    ancString<<"\t"<<
 		    toprint->countAllele(refIdx)<<","<<
 		    altCount<<
 		    ":"<<(toprint->isCpg()?"1":"0")<<endl;
-	    }
 
 	}else{
 	    continue;//triallelic, skip
 	}
+
+	//     //cout<<"ok "<<alt<<endl;
+	//     if( isResolvedDNA(allel_chimp) ){	//chimp allele exists A,C,G,T
+
+	// 	// if(allel_chimp != allel_ref ){ //triallelic with respect to chimp,skip
+	// 	//     cout<<*toprint<<endl;
+	// 	//     cout<<lineFromEPO<<endl;		   
+	// 	// }
+		
+	// 	if(alt!= 'N')
+	// 	    if(allel_chimp != allel_ref && //triallelic with respect to chimp,skip
+	// 	       allel_chimp != alt){
+	// 		continue;
+	// 	    }
+	    
+	    
+	// 	if(alt=='N' && 
+	// 	   allel_chimp != allel_ref){//no alt in bamtable and chimp is different: chimp becomes alt
+	// 	    alt=allel_chimp;		  
+	// 	}
+
+
+	// 	cout<<toprint->getChr()<<"\t"<< toprint->getPosition()<<"\t"<<
+	// 	    allel_ref<<","<<
+	// 	    alt<<"\t";
+
+	// 	if(allel_chimp == allel_ref ){
+	// 	    cout<<"1,0:"+string(cpgEPO?"1":"0")<<"\t";
+	// 	}else{ 
+	// 	    if(allel_chimp == alt){
+	// 		cout<<"0,1:"+string(cpgEPO?"1":"0")<<"\t";
+	// 	    }else{
+	// 		cerr<<"Error, wrong state between "<<(*toprint)<<"\t"<<lineFromEPO<<endl;
+	// 		return 1;	
+	// 	    }
+	// 	}
+
+
+
+	// 	int altCount=0;
+	// 	if(alt=='N'){
+	// 	    altCount=0;
+	// 	}else{
+	// 	    altCount=toprint->countAllele(base2int(alt));
+	// 	}
+	// 	cout<<toprint->countAllele(refIdx)<<","<<
+	// 	    altCount<<
+	// 	    ":"<<(toprint->isCpg()?"1":"0")<<endl;
+	//     }else{
+	// 	int altCount=0;
+	// 	if(alt=='N'){
+	// 	    altCount=0;
+	// 	}else{
+	// 	    altCount=toprint->countAllele(base2int(alt));
+	// 	}
+	// 	//cout<<refIdx<<endl;
+	// 	cout<<toprint->getChr()<<"\t"<< toprint->getPosition()<<"\t"<<
+	// 	    allel_ref<<","<<
+	// 	    alt<<"\t"<<
+	// 	    "0,0:"+string(cpgEPO?"1":"0")<<"\t"<<
+	// 	    toprint->countAllele(refIdx)<<","<<
+	// 	    altCount<<
+	// 	    ":"<<(toprint->isCpg()?"1":"0")<<endl;
+	//     }
+
+	// }else{
+	//     continue;//triallelic, skip
+	// }
 
 
 	// if(isResolvedDNA(allel_chimp)){	//chimp allele exists

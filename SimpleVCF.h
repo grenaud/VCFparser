@@ -12,6 +12,7 @@
 #include <vector> 
 #include <map>
 
+#include "CoreVCF.h"
 #include "AlleleInfo.h"
 #include "utils.h"
 
@@ -28,20 +29,24 @@ private:
     vector<int> countC;
     vector<int> countG;
     vector<int> countT;
-
+    bool observedGL;
+    bool observedPL;
+	    
     //Taken from http://www.broadinstitute.org/gatk/guide/topic?name=intro
     bool unresolvedGT;   //if GT == "./."
     bool homozygousREF;  //if GT == "0/0"
     bool heterozygous;   //if GT == "0/1"
     bool homozygousALT;  //if GT == "1/1"
     bool heterozygousALT;  //if GT == "1/2"
+    bool heterozygous2ndALT;  //if GT == "0/2" meaning has ref and second alt
+    bool deleteCore;
 
-    bool resolvedSingleBasePairREF;
-    bool resolvedSingleBasePairALT;
-    bool allAltResolvedSingleBasePair;
+    /* bool resolvedSingleBasePairREF; */
+    /* bool resolvedSingleBasePairALT; */
+    /* bool allAltResolvedSingleBasePair; */
 
-    bool closeIndel;
-    bool isIndel;
+    //bool closeIndel;
+    /* bool isIndel; */
     //Format fields
     string rawFormatNames;
     string rawFormatValues;
@@ -56,28 +61,37 @@ private:
     float  formatFieldGQ;
     int    formatFieldDP;
     
-    //todo
+    
+    string  formatFieldGL;
     string  formatFieldPL;
     int     formatFieldPLHomoRef;
+    //for bi-allelic sites
     int     formatFieldPLHetero;
     int     formatFieldPLHomoAlt;
+    
+    //for tri-allelic sites
+    int formatFieldPLHetero1;
+    int formatFieldPLHomoAlt1;
+    int formatFieldPLHetero2;
+    int formatFieldPLHetero12;
+    int formatFieldPLHomoAlt2;
 
 
+    /* unsigned int position; */
+    /* string    chrName; */
+    /* string    id; */
 
-    unsigned int position;
-    string    chrName;
-    string    id;
+    /* string    ref; */
+    /* string    alt; */
+    /* vector<string> altAlleles; */
 
-    string    ref;
-    string    alt;
-    vector<string> altAlleles;
+    /* float    qual;     */
+    /* string filter; */
 
-    float    qual;    
-    string filter;
-
-    vector<string> fields;
-    string infoFieldRaw;
-    map<string, string> * infoField;
+    /* vector<string> fields; */
+    /* string infoFieldRaw; */
+    /* map<string, string> * infoField; */
+    /* bool haveInfoField; */
 
     vector<string> formatFieldNames;
     vector<string> formatFieldValues;
@@ -85,30 +99,44 @@ private:
 
     //! Returns true if the allele char represented by the char is present, see hasAllele for use with int
     inline bool isThisAllelePresent(char bp) const ;
-    bool haveInfoField;
-
+    CoreVCF *  corevcf;
+    void init(const vector<string> & fields, CoreVCF *  corevcf_);
+    
 public:
-
-//! Constructor 
-/*!
-  \param line : The raw line from the VCF file
-*/
+    
+    //! Constructor 
+    /*!
+      \param line : The raw line from the VCF file
+    */
     SimpleVCF(string line);
+
+    //! Constructor 
+    /*!
+      \param fields:  The tab delimited fields 
+      \param corevcf:  
+    */
+    SimpleVCF(const vector<string> & fields, CoreVCF *  corevcf_,bool deleteCore_=true); //string line){
+    
 
     //! Dummy constructor, do not use 
     SimpleVCF();
 
     ~SimpleVCF();
-//! Retrieves the reference allele as a string as it is in the raw VCF
+
+    //! Retrieves a reference to the coreVCF object
+    CoreVCF *  getCorevcf();
+
+
+    //! Retrieves the reference allele as a string as it is in the raw VCF
     string getRef() const;
-//! Retrieves the alternative allele(s) as a string as it is in the raw VCF
+    //! Retrieves the alternative allele(s) as a string as it is in the raw VCF
     string getAlt() const;
-//! Retrieves the alternative alleles as a vector of strings
+    //! Retrieves the alternative alleles as a vector of strings
     vector<string> getAltAlleles() const;
-//! Retrieves the # of alternative alleles found
+    //! Retrieves the # of alternative alleles found
     int getAltCount() const;
 
-    void parseInfoFields();
+    /* void parseInfoFields(); */
 
 //! Retrieves the potential associated ID
     string getID() const;
@@ -146,16 +174,7 @@ public:
   \return  : The information associated with the tag, if the tag does not exist, return empty string
   \sa  hasInfoField()
 */
-    template <typename T>
-	T   getInfoField(string tag)  {
-	if(!haveInfoField){ parseInfoFields(); }
-	map<string,string>::const_iterator it=infoField->find(tag);
-	if(it == infoField->end()){
-	    return T();
-	}else{
-	    return destringify<T>(it->second);
-	}
-    }
+ 
 
     //! Retrieves the raw info field, not parsed
     string getInfoFieldRaw() const; 
@@ -180,7 +199,6 @@ public:
     int    getPLHomoAlt() const;
 
 
-
     //! Sets the close to indel flag
     void    setCloseIndel(bool closeIndel);
     bool    getCloseIndel() const;
@@ -201,8 +219,10 @@ public:
     bool isHeterozygous() const;   
     //! true if GT field is "1/1"
     bool isHomozygousALT() const;
-   //! true if GT field is "1/2"
+    //! true if GT field is "1/2"
     bool isHeterozygousALT() const;
+    //! true if GT field is "0/2"
+    bool isHeterozygous2ndALT() const;
 
     /* friend ostream& operator<<(ostream& os, const SimpleVCF& smvcf); */
     void print(ostream& os) const;
@@ -223,10 +243,23 @@ public:
     //! returns the count of reference and alternative allele based on PL field
     pair<int,int> returnLikelyAlleleCountForRefAlt(int minPLdiffind=50) const;
 
+    //returns a string just using GT
+    string getAlleCountBasedOnGT() const;
+
     int getADforA();
     int getADforC();
     int getADforG();
     int getADforT();
 
+    template <typename T>
+	T   getInfoField(string tag)  {
+	/* if(!haveInfoField){ parseInfoFields(); } */
+	/* map<string,string>::const_iterator it=infoField->find(tag); */
+	/* if(it == infoField->end()){ */
+	/*     return T(); */
+	/* }else{ */
+	return corevcf->getInfoField<T>(tag);
+	//}
+    }
 };
 #endif

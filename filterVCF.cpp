@@ -121,6 +121,8 @@ int main (int argc, char *argv[]) {
 	return 1;
     }
 
+    //    cerr<<"minMQcutoff "<<minMQcutoff<<endl;
+
     filtersVCF= new SetVCFFilters (minGQcutoff          ,
 				   minMQcutoff          ,
 				   minMapabilitycutoff  ,
@@ -144,7 +146,7 @@ int main (int argc, char *argv[]) {
 
     }
 
-
+    cerr<<"filtersVCF finished successfully "<<rejectFiltersTally()<<endl;
     delete(filtersVCF);
     return 0;
 }

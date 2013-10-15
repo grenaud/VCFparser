@@ -62,8 +62,8 @@ bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
 
     bool notFoundNonindel=smvcf->containsIndel() ;
 
-    
-    if(notFoundNonindel){ rejectIndel++;  //we don't want indels		
+    if(notFoundNonindel){ 
+	rejectIndel++;  //we don't want indels		
 	return false;
     }
     
@@ -170,7 +170,7 @@ bool passedFilters(SimpleVCF * smvcf,const SetVCFFilters * filtersToUse){
 
     // - have MQ< 30
     double minMQ=smvcf->getInfoField<double>("MQ");
-		    
+    //cerr<<minMQ<<endl;
     if(minMQ < filtersToUse->getMinMQcutoff()){
 	rejectLOWMQ++;
 	return false;

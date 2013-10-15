@@ -69,6 +69,7 @@ VCFreader::~VCFreader(){
     if(tabixMode){
 	delete rt; //calling the destructor
     }
+
     if(textMode)
 	vcfFile.close();
 

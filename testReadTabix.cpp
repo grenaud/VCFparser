@@ -23,25 +23,26 @@ int main (int argc, char *argv[]) {
 
 
     
-    if(0){
+    if(1){
 
     ReadTabix rt ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
     		  "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
     		  "10",
     		  75060,
     		  75070);
+    cout<<rt.getHeader()<<endl;
     string buffer;//=new string();
     while(rt.readLine(buffer)){
     	cout<<"buffer "<<buffer<<endl;
     	SimpleVCF svcf (buffer);
-    	cout<<svcf.getAlt()<<endl;
+    	cout<<"alt "<<svcf.getAlt()<<endl;
     	//cout<<svcf.getInfoField<float>("MQ")<<endl;
-    	cout<<svcf.getPLHomoRef()<<endl;
+    	cout<<"pl "<<svcf.getPLHomoRef()<<endl;
     }
     exit(1);
     }    
     
-    if(1){
+    if(0){
     VCFreader vcfr ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
     		    "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
     		    "10",
