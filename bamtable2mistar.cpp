@@ -1,7 +1,7 @@
 /*
  * testReadTabix
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
@@ -150,10 +150,13 @@ int main (int argc, char *argv[]) {
     
 
     cout<<"#chr\tcoord\tREF,ALT\troot\tanc\t"<<namePop<<endl;
+    unsigned int totalRec=0;
+    unsigned int writtenRec=0;
 
     while(btr.hasData()){
 	BAMTableObj * toprint=btr.getData();
-
+	totalRec++;
+	
 
 
 	// if(passedFilters(toprint,filtersVCF)){
@@ -307,6 +310,8 @@ int main (int argc, char *argv[]) {
 		    altCount=toprint->countAllele(base2int(alt));
 		}
 		//cout<<refIdx<<endl;
+		writtenRec++;
+
 		cout<<toprint->getChr()<<"\t"<< toprint->getPosition()<<"\t"<<
 		    allel_ref<<","<<
 		    alt<<"\t"<<
@@ -522,6 +527,10 @@ int main (int argc, char *argv[]) {
     //epoFileFP.close();
     //    delete(filtersVCF);
     delete(rtEPO);
+
+    cerr<<"Program "<<argv[0]<<" looked at  "<<totalRec<<" records, wrote "<<writtenRec<<" terminated gracefully"<<endl;
+
+    
     return 0;
 }
 

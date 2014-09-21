@@ -1,7 +1,7 @@
 /*
  * ReadTabix
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
@@ -31,6 +31,40 @@ ReadTabix::ReadTabix(string file,string indexForFile,string chrName,int start,in
 	start--;
 
     iteratorTab=ti_query(fpTab,chrName.c_str(),start,end); 
+}
+
+ReadTabix::ReadTabix(string file,string indexForFile,string chrName){
+    if(!isFile(file)){
+	cerr<<"File "<<file<<" does not exist"<<endl;
+	exit(1);
+    }
+
+    if(!isFile(indexForFile)){
+	cerr<<"File "<<indexForFile<<" does not exist"<<endl;
+	exit(1);
+    }
+
+
+    if ((fpTab=ti_open(file.c_str(),indexForFile.c_str() ))== 0) {
+	cerr<<"Cannot open file "<<indexForFile<<""<<endl;
+	exit(1);	
+    }
+
+    if (ti_lazy_index_load(fpTab) < 0){
+	cerr<<"Cannot load index for file "<<indexForFile<<""<<endl;
+	exit(1);	
+    }
+
+    int start;
+    int end;
+    int tid;
+    
+    if (ti_parse_region(fpTab->idx, chrName.c_str(), &tid, &start, &end) == -1) {
+    	cerr<<"Cannot locate chromosome "<<chrName<<" "<<endl;
+	exit(1);
+    }
+
+    iteratorTab=ti_queryi(fpTab,tid,start,end);
 }
 
 ReadTabix::~ReadTabix(){
@@ -69,6 +103,21 @@ void ReadTabix::repositionIterator(string chrName,int start,int end){
     if(start>0)
 	start--;
     iteratorTab=ti_query(fpTab,chrName.c_str(),start,end); 
+}
+
+
+void ReadTabix::repositionIterator(string chrName){
+    ti_iter_destroy(iteratorTab);
+    int start;
+    int end;
+    int tid;
+    
+    if (ti_parse_region(fpTab->idx, chrName.c_str(), &tid, &start, &end) == -1) {
+    	cerr<<"Cannot locate chromosome "<<chrName<<" "<<endl;
+	exit(1);
+    }
+
+    iteratorTab=ti_queryi(fpTab,tid,start,end); 
 }
 
 bool ReadTabix::readLine(string & line){

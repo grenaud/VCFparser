@@ -1,12 +1,12 @@
 /*
  * MultiVCFreader
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
 #include "MultiVCFreader.h"
-// #define DEBUG
+//#define DEBUG
 
 //IMPLEMENT HEADER
 MultiVCFreader::MultiVCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead){

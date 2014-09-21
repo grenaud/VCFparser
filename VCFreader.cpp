@@ -1,12 +1,12 @@
 /*
  * VCFreader
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
 #include "VCFreader.h"
-//#define DEBUG
+// #define DEBUG
 
 
 VCFreader::VCFreader(string file,string indexForFile,string chrName,int start,int end,int indelsAhead){
@@ -79,13 +79,17 @@ VCFreader::~VCFreader(){
     // }
 
     while(!queueOfVCFs.empty()){
+#ifdef DEBUG			
+	cout<<"deleteQueue "<<svcfToReturn<<endl;
+#endif
 	delete( queueOfVCFs.front() );
 	queueOfVCFs.pop_front();
     }
 
     queueOfVCFs.clear();
-
-    //cout<<"deleteDest "<<svcfToReturn<<endl;
+#ifdef DEBUG		
+    cout<<"deleteDestr "<<svcfToReturn<<endl;
+#endif
     delete svcfToReturn;
 }
 
@@ -103,7 +107,9 @@ void VCFreader::repositionIterator(string chrName,int start,int end){
     fullQueue           =false;
     endQueue            =false;
     numberOfTimesHasDataWasCalled=0;
-
+#ifdef DEBUG			
+    cout<<"deleteRepo "<<svcfToReturn<<endl;
+#endif
     delete svcfToReturn;
     svcfToReturn=0;
 
@@ -113,6 +119,9 @@ void VCFreader::repositionIterator(string chrName,int start,int end){
     previouslyFoundIndel=false;
 
     while(!queueOfVCFs.empty()){
+#ifdef DEBUG			
+    cout<<"deleteQue "<<svcfToReturn<<endl;
+#endif
 	delete( queueOfVCFs.front() );
 	queueOfVCFs.pop_front();
     }
@@ -219,7 +228,7 @@ bool VCFreader::hasData(){
 	if(getNextLine()){
 	    SimpleVCF * svcf = new  SimpleVCF(currentline);
 #ifdef DEBUG		
-	     cout<<"new2 "<<*svcf<<endl;
+	    cout<<"new2 "<<svcf<<endl;
 #endif
 	    // cout<<"size "<<queueOfVCFs.size()<<endl;
 	    if(queueOfVCFs.size() != 0 ){
@@ -277,7 +286,10 @@ SimpleVCF * VCFreader::getData(){
     numberOfTimesHasDataWasCalled=0;
 
     //delete the previous data
-    //cout<<"delete2 "<<svcfToReturn<<endl;
+#ifdef DEBUG			
+    cout<<"delete2 "<<svcfToReturn<<endl;
+#endif
+
     delete svcfToReturn;
     //}
 

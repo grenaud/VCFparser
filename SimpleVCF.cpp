@@ -1,7 +1,7 @@
 /*
  * SimpleVCF
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
@@ -12,9 +12,11 @@ SimpleVCF::SimpleVCF(string line){
     //trimWhiteSpacesBothEnds	(&line);
     vector<string> fields=allTokens(line,'\t');
     corevcf = new CoreVCF(fields);
+    deleteCore=true;
     // cerr<<"Ok "<<endl;
     init(fields,corevcf);
     // cerr<<"Ok "<<endl;
+    // cout<<"SimpleVCF "<<this<<"\t"<<deleteCore<<endl;
 }
 
 
@@ -54,44 +56,113 @@ void SimpleVCF::init(const vector<string> & fields, CoreVCF *  corevcf_){ //stri
     formatFieldNames  = allTokens(rawFormatNames ,':');
     formatFieldValues = allTokens(rawFormatValues,':');
     
+    if(rawFormatValues == "./."){
+	unresolvedGT=true; 
+
+	observedPL=false;
+	observedGL=false;
+	haploidCall=false;
+    }else{
+
     if(formatFieldNames.size() != formatFieldValues.size()){
 	cerr<<"SimpleVCF: for line "<<vectorToString(fields,"\t")<<" the format field does not have as many fields as the values"<<endl;
 	exit(1);
     }
+
     observedPL=false;
     observedGL=false;
-
+    haploidCall=false;
     for(unsigned int i=0;i<formatFieldNames.size();i++){
-	//cout<<"formatFieldNames["<<i<<"] "<<formatFieldNames[i]<<" = "<<formatFieldValues[i]<<endl;
+	 // cerr<<"formatFieldNames["<<i<<"] "<<formatFieldNames[i]<<" = "<<formatFieldValues[i]<<endl;
 	if(formatFieldNames[i] == "GT"){ 
 	    indexGenotype     =i; 
 	    formatFieldGT=                   formatFieldValues[i]; 
 	    bool determinedGenotype=false;
 	    //Taken from http://www.broadinstitute.org/gatk/guide/topic?name=intro
-	    if(formatFieldGT == "./."){ determinedGenotype=true; unresolvedGT=true;    }
+	    if(formatFieldGT == "./."){ determinedGenotype=true; unresolvedGT=true;       }
 
-	    if(formatFieldGT == "0/0"){ determinedGenotype=true; homozygousREF=true;   }
-	    if(formatFieldGT == "0|0"){ determinedGenotype=true; homozygousREF=true;   }
+	    if(formatFieldGT == "0"){   determinedGenotype=true; homozygousREF=true;   haploidCall=true;   }
+	    if(formatFieldGT == "1"){   determinedGenotype=true; homozygousALT=true;   haploidCall=true;   }
 
-	    if(formatFieldGT == "0/1"){ determinedGenotype=true; heterozygous=true;    }
-	    if(formatFieldGT == "0|1"){ determinedGenotype=true; heterozygous=true;    }
-	    if(formatFieldGT == "1|0"){ determinedGenotype=true; heterozygous=true;    }
+	    if(formatFieldGT == "0/0"){ determinedGenotype=true; homozygousREF=true;      }
+	    if(formatFieldGT == "0|0"){ determinedGenotype=true; homozygousREF=true;      }
+
+	    if(formatFieldGT == "0/1"){ determinedGenotype=true; heterozygous=true;       }
+	    if(formatFieldGT == "0|1"){ determinedGenotype=true; heterozygous=true;       }
+	    if(formatFieldGT == "1|0"){ determinedGenotype=true; heterozygous=true;       }
 
 
-	    if(formatFieldGT == "1/1"){ determinedGenotype=true; homozygousALT=true;   }
-	    if(formatFieldGT == "1|1"){ determinedGenotype=true; homozygousALT=true;   }
+	    if(formatFieldGT == "1/1"){ determinedGenotype=true; homozygousALT=true;      }
+	    if(formatFieldGT == "1|1"){ determinedGenotype=true; homozygousALT=true;      }
 
-	    if(formatFieldGT == "1/2"){ determinedGenotype=true; heterozygousALT=true; } //has first alt and second alt
+	    if(formatFieldGT == "1/2"){ determinedGenotype=true; heterozygousALT=true;    } //has first alt and second alt
+	    if(formatFieldGT == "1|2"){ determinedGenotype=true; heterozygousALT=true;    } //has first alt and second alt
+
+	    if(formatFieldGT == "2/1"){ determinedGenotype=true; heterozygousALT=true;    } //has first alt and second alt
+	    if(formatFieldGT == "2|1"){ determinedGenotype=true; heterozygousALT=true;    } //has first alt and second alt
+
+	    if(formatFieldGT == "0|2"){ determinedGenotype=true; heterozygous2ndALT=true; } //has ref       and second alt
 	    if(formatFieldGT == "0/2"){ determinedGenotype=true; heterozygous2ndALT=true; } //has ref       and second alt
 
+	    if(formatFieldGT == "2/0"){ determinedGenotype=true; heterozygous2ndALT=true; } //has ref       and second alt
+	    if(formatFieldGT == "2|0"){ determinedGenotype=true; heterozygous2ndALT=true; } //has ref       and second alt
+
+	    if(formatFieldGT == "2/2"){ determinedGenotype=true; homozygous2ndALT=true; }   //twice the second alt
+	    if(formatFieldGT == "2|2"){ determinedGenotype=true; homozygous2ndALT=true; }   //twice the second alt
+
+	    //for more than 3
+
 	    if(!determinedGenotype){
-		cerr<<"SimpleVCF: unable to determine genotype for line "<<vectorToString(fields,"\t")<<""<<endl;
+
+		vector<string> fieldsOfGT  = allTokens(formatFieldGT ,'/');
+	    
+		if(fieldsOfGT.size() == 2){
+		    // int alleleCFirst = destringify<int>  (fieldsOfGT[0]);
+		    // int alleleC2nd   = destringify<int>  (fieldsOfGT[1]);
+		    if(isPositiveInt(fieldsOfGT[0]) &&
+		       isPositiveInt(fieldsOfGT[1])    ){
+			determinedGenotype=true; unresolvedGT=true; 
+		    }		   
+		}else{
+		    vector<string> fieldsOfGT  = allTokens(formatFieldGT ,'|');
+	    
+		    if(fieldsOfGT.size() == 2){
+			// int alleleCFirst = destringify<int>  (fieldsOfGT[0]);
+			// int alleleC2nd   = destringify<int>  (fieldsOfGT[1]);
+			if(isPositiveInt(fieldsOfGT[0]) &&
+			   isPositiveInt(fieldsOfGT[1])   ){
+			    determinedGenotype=true; unresolvedGT=true; 
+			}		   
+		    }else{
+
+		    }
+
+		}
+	    }
+	    // if(formatFieldGT == "0/3" ||
+	    //    formatFieldGT == "3/3" ||
+	    //    formatFieldGT == "3/3" ||
+	       
+	       
+
+	    //    ){ determinedGenotype=true; unresolvedGT=true; 
+
+	    if(!determinedGenotype){
+		cerr<<"SimpleVCF: unable to determine genotype for line "<<vectorToString(fields,"\t")<<" field=#"<<formatFieldGT<<"#"<<endl;
 		exit(1);
 	    }
 	    continue;
 	}
 
-	if(formatFieldNames[i] == "GQ"){ indexGenotypeQual =i; formatFieldGQ=destringify<float>(formatFieldValues[i]); continue; }
+	if(formatFieldNames[i] == "GQ"){ 
+	    if(formatFieldValues[i] == "."){
+		indexGenotypeQual =i; 
+		formatFieldGQ=0.0;
+	    }else{
+		indexGenotypeQual =i; 
+		formatFieldGQ=destringify<float>(formatFieldValues[i]);
+	    } 
+	    continue; }
 	if(formatFieldNames[i] == "DP"){ indexDepth        =i; formatFieldDP=destringify<int>  (formatFieldValues[i]); continue;}
 
 	if(formatFieldNames[i] == "GL"){ 
@@ -105,28 +176,39 @@ void SimpleVCF::init(const vector<string> & fields, CoreVCF *  corevcf_){ //stri
 	    formatFieldGL  = formatFieldValues[i];
 	    vector<string> glfields = allTokens(formatFieldGL,',');
 
-	    if(glfields.size() == 3){ //biallelic
-
+	    if(glfields.size() == 2){ //haploid calls (e.g. X for a male)
+		if(!haploidCall){
+		    cerr<<"SimpleVCF: cannot observed 2 GL fields for a non-haploid record "<<vectorToString(fields,"\t")<<""<<endl;
+		    exit(1);
+		}
 		formatFieldPLHomoRef =  int(-10.0*destringify<double>(glfields[0]));
-		formatFieldPLHetero  =  int(-10.0*destringify<double>(glfields[1]));
-		formatFieldPLHomoAlt =  int(-10.0*destringify<double>(glfields[2]));
-
+		formatFieldPLHetero  =  -1000000; //very unlikely
+		formatFieldPLHomoAlt =  int(-10.0*destringify<double>(glfields[1]));
+		    
 	    }else{
-		if(glfields.size() == 6){ //triallelic
-		    //according to VCF docs it has the following order AA,AB,BB,AC,BC,CC
-		    formatFieldPLHomoRef  =  int(-10.0*destringify<double>(glfields[0])); //r-r
+		if(glfields.size() == 3){ //biallelic
 
-		    formatFieldPLHetero1  =  int(-10.0*destringify<double>(glfields[1])); //r-a1
-		    formatFieldPLHomoAlt1 =  int(-10.0*destringify<double>(glfields[2])); //a1-a1
-
-		    formatFieldPLHetero2  =  int(-10.0*destringify<double>(glfields[3])); //r-a2
-
-		    formatFieldPLHetero12 =  int(-10.0*destringify<double>(glfields[4])); //a1-a2
-		    formatFieldPLHomoAlt2 =  int(-10.0*destringify<double>(glfields[5])); //a2-a2
+		    formatFieldPLHomoRef =  int(-10.0*destringify<double>(glfields[0]));
+		    formatFieldPLHetero  =  int(-10.0*destringify<double>(glfields[1]));
+		    formatFieldPLHomoAlt =  int(-10.0*destringify<double>(glfields[2]));
 
 		}else{
-		    cerr<<"SimpleVCF: for line "<<vectorToString(fields,"\t")<<" the GL field does not have 3 or 6 fields"<<endl;
-		    exit(1);
+		    if(glfields.size() == 6){ //triallelic
+			//according to VCF docs it has the following order AA,AB,BB,AC,BC,CC
+			formatFieldPLHomoRef  =  int(-10.0*destringify<double>(glfields[0])); //r-r
+
+			formatFieldPLHetero1  =  int(-10.0*destringify<double>(glfields[1])); //r-a1
+			formatFieldPLHomoAlt1 =  int(-10.0*destringify<double>(glfields[2])); //a1-a1
+
+			formatFieldPLHetero2  =  int(-10.0*destringify<double>(glfields[3])); //r-a2
+
+			formatFieldPLHetero12 =  int(-10.0*destringify<double>(glfields[4])); //a1-a2
+			formatFieldPLHomoAlt2 =  int(-10.0*destringify<double>(glfields[5])); //a2-a2
+
+		    }else{
+			cerr<<"SimpleVCF: for line "<<vectorToString(fields,"\t")<<" the GL field does not have 3 or 6 fields"<<endl;
+			exit(1);
+		    }
 		}
 	    }
 	}
@@ -141,6 +223,13 @@ void SimpleVCF::init(const vector<string> & fields, CoreVCF *  corevcf_){ //stri
 	    }
 
 	    indexPL        = i; 
+
+	    if(formatFieldValues[i] == "."){
+		formatFieldPL = formatFieldValues[i];
+		unresolvedGT=true; 
+		continue;
+	    }
+
 	    formatFieldPL  = formatFieldValues[i];
 	    vector<string> plfields = allTokens(formatFieldPL,',');
 
@@ -171,42 +260,42 @@ void SimpleVCF::init(const vector<string> & fields, CoreVCF *  corevcf_){ //stri
 	}
 
 	//To uncomment the fields to get these fields
-	// if(formatFieldNames[i] == "A"){   
-	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	//     for(int j=0;j<adfield.size();j++){
-	// 	countA.push_back(   destringify<int>( adfield[j]) );
-	//     }
-	//     continue;
-	// }
+	if(formatFieldNames[i] == "A"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(unsigned int j=0;j<adfield.size();j++){
+		countA.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
 
-	// if(formatFieldNames[i] == "C"){   
-	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	//     for(int j=0;j<adfield.size();j++){
-	// 	countC.push_back(   destringify<int>( adfield[j]) );
-	//     }
-	//     continue;
-	// }
+	if(formatFieldNames[i] == "C"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(unsigned int j=0;j<adfield.size();j++){
+		countC.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
 
-	// if(formatFieldNames[i] == "G"){   
-	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	//     for(int j=0;j<adfield.size();j++){
-	// 	countG.push_back(   destringify<int>( adfield[j]) );
-	//     }
-	//     continue;
-	// }
+	if(formatFieldNames[i] == "G"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(unsigned int j=0;j<adfield.size();j++){
+		countG.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
 
-	// if(formatFieldNames[i] == "T"){   
-	//     vector<string> adfield = allTokens( formatFieldValues[i] ,',');
-	//     for(int j=0;j<adfield.size();j++){
-	// 	countT.push_back(   destringify<int>( adfield[j]) );
-	//     }
-	//     continue;
-	// }
+	if(formatFieldNames[i] == "T"){   
+	    vector<string> adfield = allTokens( formatFieldValues[i] ,',');
+	    for(unsigned int j=0;j<adfield.size();j++){
+		countT.push_back(   destringify<int>( adfield[j]) );
+	    }
+	    continue;
+	}
 	    
 
 
     }
-
+    }
     // cout<<getADforA()<<endl;
     // cout<<getADforC()<<endl;
     // cout<<getADforG()<<endl;
@@ -220,7 +309,7 @@ SimpleVCF::~SimpleVCF(){
 
     ///cout<<"DESTRUCTOR SimpleVCF"<<endl;
     if(deleteCore){
-	//cout<<"delete CORE"<<endl;
+	// cout<<"delete CORE "<<this<<endl;
 	delete corevcf;
     }
     // delete  altAlleles;
@@ -299,6 +388,14 @@ int     SimpleVCF::getPLHomoAlt() const{
 }
 
 
+bool SimpleVCF::getObservedGL() const{
+    return observedGL;
+}
+
+bool SimpleVCF::getObservedPL() const{
+    return observedPL;
+}
+
 
 bool SimpleVCF::containsIndel() const{
     return corevcf->isIndel;
@@ -349,6 +446,31 @@ bool SimpleVCF::getCloseIndel() const { return corevcf->getCloseIndel(); }
 
 bool SimpleVCF::isHeterozygous2ndALT() const{
     return heterozygous2ndALT;
+}
+
+unsigned int SimpleVCF::getAltAlleleCount() const{
+    return corevcf->altAlleles.size();
+}
+
+char SimpleVCF::getOtherAllele(char baseToAvoid) const{
+    if( heterozygous ){ 
+	
+	if(corevcf->ref[0]     == baseToAvoid){
+	    return     corevcf->alt[0]; 
+	}else{
+	    if(corevcf->alt[0] == baseToAvoid){
+		return corevcf->ref[0]; 
+	    }else{
+		cerr<<"SimpleVCF: getOtherAllele Cannot get another allele besides "<<baseToAvoid<<" for "<<(*this)<<endl;
+		exit(1);    
+	    }
+	}
+
+    }
+
+    cerr<<"SimpleVCF: getOtherAllele Cannot get another allele besides "<<baseToAvoid<<" for "<<(*this)<<endl;
+    exit(1);    
+    return 'N';
 }
 
 char SimpleVCF::getRandomAllele() const{
@@ -445,14 +567,21 @@ string SimpleVCF::getAlleCountBasedOnGT() const{
     if(unresolvedGT)
 	toreturn="0,0";
     else{
+	
 	if(homozygousREF)
-	    toreturn="2,0";
+	    if(haploidCall)		
+		toreturn="1,0";
+	    else
+		toreturn="2,0";
 	else{
 	    if(heterozygous)
 		toreturn="1,1";
 	    else{
 		if(homozygousALT)
-		    toreturn="0,2";
+		    if(haploidCall)
+			toreturn="0,1";
+		    else		
+			toreturn="0,2";		
 		else{
 		    cerr<<"SimpleVCF:getAlleCountBasedOnGT() unresolved genotype"<<endl;
 		    exit(1);
@@ -475,6 +604,8 @@ pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) cons
     if(unresolvedGT) //unresolved, we cannot infer anything
 	return pair<int,int>(0,0);
 
+    
+    
     if ( (formatFieldPLHetero-formatFieldPLHomoRef) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHomoRef) >= minPLdiffind) {  //high likelihood of homo ref, produce 2 alleles ref
 	// refAlleles+=2;
 	// altAlleles+=0;
@@ -508,6 +639,25 @@ pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) cons
 	    }
 	}
     }// end all cases
+    
+}
+
+
+pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAltJustGT() const{
+
+    if(unresolvedGT) //unresolved, we cannot infer anything
+	return pair<int,int>(0,0);
+
+    
+    if(homozygousREF)
+	return pair<int,int>(2,0);
+    if(heterozygous)
+	return pair<int,int>(1,1);
+    if(homozygousALT)
+	return pair<int,int>(0,2);
+
+
+    return pair<int,int>(0,0);//cannot infer anything
 
 }
 
@@ -515,6 +665,18 @@ pair<int,int> SimpleVCF::returnLikelyAlleleCountForRefAlt(int minPLdiffind) cons
 
 
 
+bool SimpleVCF::isHeterozygousUsingPL(int minPLdiffind) const{
+
+    if(unresolvedGT)
+	return false; //unresolved
+
+    if ((formatFieldPLHomoRef-formatFieldPLHetero) >= minPLdiffind && (formatFieldPLHomoAlt-formatFieldPLHetero) >= minPLdiffind) { //high likelihood of hetero, produce 1 allele of each
+	return true;
+    }else{
+	return false;
+    }// end all cases
+
+}
 
 
 
@@ -560,7 +722,7 @@ char SimpleVCF::getRandomAlleleUsingPL(int minPLdiffind) const{
     }// end all cases
 }
 
-int SimpleVCF::getADforA(){
+int SimpleVCF::getADforA() const{
     int toReturn=0;
     for(unsigned int j=0;j<countA.size();j++){
 	toReturn+=countA[j];
@@ -568,7 +730,7 @@ int SimpleVCF::getADforA(){
     return toReturn;
 }
  
-int SimpleVCF::getADforC(){
+int SimpleVCF::getADforC() const{
     int toReturn=0;
     for(unsigned int j=0;j<countC.size();j++){
 	toReturn+=countC[j];
@@ -576,7 +738,7 @@ int SimpleVCF::getADforC(){
     return toReturn;
 }
 
-int SimpleVCF::getADforG(){
+int SimpleVCF::getADforG() const{
     int toReturn=0;
     for(unsigned int j=0;j<countG.size();j++){
 	toReturn+=countG[j];
@@ -585,7 +747,7 @@ int SimpleVCF::getADforG(){
 }
  
 
-int SimpleVCF::getADforT(){
+int SimpleVCF::getADforT() const{
     int toReturn=0;
     for(unsigned int j=0;j<countT.size();j++){
 	toReturn+=countT[j];
@@ -593,3 +755,14 @@ int SimpleVCF::getADforT(){
     return toReturn;
 }
 
+
+int SimpleVCF::getADforAllele(int indexAlle) const  {
+
+    if(indexAlle == 1){return getADforA();}
+    if(indexAlle == 2){return getADforC();}
+    if(indexAlle == 3){return getADforG();}
+    if(indexAlle == 4){return getADforT();}
+
+    cerr<<"SimpleVCF: getADforAllele() request for value: "<<indexAlle<<" cannot be completed, must be between 1 and 4, exiting"<<endl;
+    exit(1);
+}

@@ -1,7 +1,7 @@
 /*
  * testReadTabix
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
@@ -135,6 +135,8 @@ int main (int argc, char *argv[]) {
     // 75070,
     // 5);
     //header
+    unsigned int totalRec=0;
+    unsigned int writtenRec=0;
 
     cout<<"#MISTAR"<<endl;    
     string programLine;
@@ -150,6 +152,7 @@ int main (int argc, char *argv[]) {
     string line;
     bool hasData= getline (myfile,line);
     while (hasData ){
+	totalRec++;
 
 	// while(btr.hasData()){
 	// BAMTableObj * toprint=btr.getData();
@@ -335,6 +338,8 @@ int main (int argc, char *argv[]) {
 	    }
 
 	    //cout<<refIdx<<endl;
+	    writtenRec++;
+
 	    cout<<chr<<"\t"<< pos<<"\t"<<
 		allel_ref<<","<<
 		alt<<"\t"<<
@@ -358,6 +363,9 @@ int main (int argc, char *argv[]) {
     //epoFileFP.close();
     //    delete(filtersVCF);
     delete(rtEPO);
+
+    cerr<<"Program "<<argv[0]<<" looked at  "<<totalRec<<" records, wrote "<<writtenRec<<" terminated gracefully"<<endl;
+
     return 0;
 }
 

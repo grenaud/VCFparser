@@ -89,6 +89,7 @@ CoreVCF::~CoreVCF(){
 }
 
 
+
 void CoreVCF::parseInfoFields(){
     haveInfoField=true;
     infoField    =        info2map( infoFieldRaw );

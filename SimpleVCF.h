@@ -32,6 +32,7 @@ private:
     bool observedGL;
     bool observedPL;
 	    
+    bool haploidCall;
     //Taken from http://www.broadinstitute.org/gatk/guide/topic?name=intro
     bool unresolvedGT;   //if GT == "./."
     bool homozygousREF;  //if GT == "0/0"
@@ -39,6 +40,8 @@ private:
     bool homozygousALT;  //if GT == "1/1"
     bool heterozygousALT;  //if GT == "1/2"
     bool heterozygous2ndALT;  //if GT == "0/2" meaning has ref and second alt
+    bool homozygous2ndALT;  //if GT == "0/2" meaning has ref and second alt
+
     bool deleteCore;
 
     /* bool resolvedSingleBasePairREF; */
@@ -134,7 +137,7 @@ public:
     //! Retrieves the alternative alleles as a vector of strings
     vector<string> getAltAlleles() const;
     //! Retrieves the # of alternative alleles found
-    int getAltCount() const;
+    /* int getAltCount() const; */
 
     /* void parseInfoFields(); */
 
@@ -161,8 +164,10 @@ public:
 */
     bool hasInfoField(string tag)  ;
 
+    char getOtherAllele(char baseToAvoid) const;
     char getRandomAllele() const;
     char getRandomAlleleUsingPL(int minPLdiffind) const;
+    bool isHeterozygousUsingPL(int minPLdiffind) const;
 
 
 //! To retrieve the information for one of the INFO fields 
@@ -175,6 +180,11 @@ public:
   \sa  hasInfoField()
 */
  
+
+    //have we seen the GL field?
+    bool getObservedGL() const;
+    //have we seen the PL field?
+    bool getObservedPL() const;
 
     //! Retrieves the raw info field, not parsed
     string getInfoFieldRaw() const; 
@@ -241,15 +251,20 @@ public:
     bool hasAllele(int indexAlle) const;
 
     //! returns the count of reference and alternative allele based on PL field
-    pair<int,int> returnLikelyAlleleCountForRefAlt(int minPLdiffind=50) const;
+    pair<int,int> returnLikelyAlleleCountForRefAlt(int minPLdiffind=33) const;
+    pair<int,int> returnLikelyAlleleCountForRefAltJustGT() const;
 
     //returns a string just using GT
     string getAlleCountBasedOnGT() const;
 
-    int getADforA();
-    int getADforC();
-    int getADforG();
-    int getADforT();
+    unsigned int getAltAlleleCount() const;
+    int getADforA() const;
+    int getADforC() const;
+    int getADforG() const;
+    int getADforT() const;
+
+    //returns allele count this allele (A:1,C:2,G:3,T:4)
+    int getADforAllele(int indexAlle) const;
 
     template <typename T>
 	T   getInfoField(string tag)  {

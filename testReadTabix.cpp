@@ -1,7 +1,7 @@
 /*
  * testReadTabix
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
@@ -25,21 +25,23 @@ int main (int argc, char *argv[]) {
     
     if(1){
 
-    ReadTabix rt ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
-    		  "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
-    		  "10",
-    		  75060,
-    		  75070);
-    cout<<rt.getHeader()<<endl;
-    string buffer;//=new string();
-    while(rt.readLine(buffer)){
-    	cout<<"buffer "<<buffer<<endl;
-    	SimpleVCF svcf (buffer);
-    	cout<<"alt "<<svcf.getAlt()<<endl;
-    	//cout<<svcf.getInfoField<float>("MQ")<<endl;
-    	cout<<"pl "<<svcf.getPLHomoRef()<<endl;
-    }
-    exit(1);
+	ReadTabix rt ("/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz",
+		      "/mnt/454/HCNDCAM/1_Extended_VCF/HGDP00521/HGDP00521.hg19_1000g.10.mod.vcf.gz.tbi",
+		      "10");
+	cout<<rt.getHeader()<<endl;
+	string buffer;//=new string();
+	rt.readLine(buffer);
+	cout<<"buffer "<<buffer<<endl;
+
+	rt.repositionIterator("10");
+	rt.readLine(buffer);
+	cout<<"buffer "<<buffer<<endl;
+
+	rt.repositionIterator("10");
+	rt.readLine(buffer);
+	cout<<"buffer "<<buffer<<endl;
+	
+		
     }    
     
     if(0){

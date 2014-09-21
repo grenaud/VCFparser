@@ -1,7 +1,7 @@
 /*
  * testReadTabix
  * Date: Aug-13-2012 
- * Author : Gabriel Renaud gabriel.reno@gmail.com
+ * Author : Gabriel Renaud gabriel.reno [at here] gmail.com
  *
  */
 
@@ -24,16 +24,17 @@ using namespace std;
 int main (int argc, char *argv[]) {
 
 
-    int minGQcutoff=40;
-    int minMQcutoff=30;
+    int minGQcutoff=0;
+    int minMQcutoff=0;
     int minCovcutoff=0;
     int maxCovcutoff=1000;
     SetVCFFilters  * filtersVCF;
-    bool allowCloseIndelProx = false;
-    bool allowRepeatMasking  = false;
-    bool allowSysErr         = false;
-    bool allowall            = false;
-    bool allowallMQ          = false;
+
+    bool filterCloseIndelProx = false;
+    bool filterRepeatMasking  = false;
+    bool filterSysErr         = false;
+    // bool allowall            = false;
+    // bool allowallMQ          = false;
 
     double     minMapabilitycutoff =0;//map20 is wrong, we need to fix it
 
@@ -45,11 +46,12 @@ int main (int argc, char *argv[]) {
 			      "\t"+"--minGQ  [gq]" +"\t\t"+"Minimal genotype quality (default: "+stringify(minGQcutoff)+")\n"+
 			      "\t"+"--minMQ  [mq]" +"\t\t"+"Minimal mapping quality (default: "+stringify(minMQcutoff)+")\n"+
 
-			      "\t"+"--allowindel"       +"\t\t" +"Allow sites considered within 5bp of an indel (default: "+booleanAsString(allowCloseIndelProx)+")\n"+
-			      "\t"+"--allowrm"          +"\t\t" +"Allow sites labeled repeat masked             (default: "+booleanAsString(allowRepeatMasking)+")\n"+
-			      "\t"+"--allowSysErr"      +"\t\t" +"Allow sites labeled as systematic error       (default: "+booleanAsString(allowSysErr)+")\n"+
-			      "\t"+"--allowall"         +"\t\t" +"Allow all sites                               (default: "+booleanAsString(allowall)+")\n"+
-			      "\t"+"--allowallMQ"       +"\t\t" +"Allow all sites but still filter on MQ        (default: "+booleanAsString(allowallMQ)+")\n");
+			      "\t"+"--filterindel"       +"\t\t" +"Filter sites considered within 5bp of an indel (default: "+booleanAsString(filterCloseIndelProx)+")\n"+
+			      "\t"+"--filterrm"          +"\t\t" +"Filter sites labeled repeat masked             (default: "+booleanAsString(filterRepeatMasking)+")\n"+
+			      "\t"+"--filterSysErr"      +"\t\t" +"Filter sites labeled as systematic error       (default: "+booleanAsString(filterSysErr)+")\n"+
+			      // "\t"+"--allowall"         +"\t\t" +"Allow all sites                               (default: "+booleanAsString(allowall)+")\n"+
+			      // "\t"+"--allowallMQ"       +"\t\t" +"Allow all sites but still filter on MQ        (default: "+booleanAsString(allowallMQ)+")\n"
+			      "");
 
 
 
@@ -92,30 +94,30 @@ int main (int argc, char *argv[]) {
         }
 	
 
-	if(strcmp(argv[i],"--allowindel") == 0 ){
-	    allowCloseIndelProx =true;
+	if(strcmp(argv[i],"--filterindel") == 0 ){
+	    filterCloseIndelProx =true;
 	    continue;
 	}
 
-	if(strcmp(argv[i],"--allowrm") == 0 ){
-	    allowRepeatMasking   =true;
+	if(strcmp(argv[i],"--filterrm") == 0 ){
+	    filterRepeatMasking   =true;
 	    continue;
 	}
 
-	if(strcmp(argv[i],"--allowSysErr") == 0 ){
-	    allowSysErr     =true;
+	if(strcmp(argv[i],"--filterSysErr") == 0 ){
+	    filterSysErr     =true;
 	    continue;
 	}
 
-	if(strcmp(argv[i],"--allowall") == 0 ){
-	    allowall     =true;
-	    continue;
-	}
+	// if(strcmp(argv[i],"--allowall") == 0 ){
+	//     allowall     =true;
+	//     continue;
+	// }
 
-	if(strcmp(argv[i],"--allowallMQ") == 0 ){
-	    allowallMQ     =true;
-	    continue;
-	}
+	// if(strcmp(argv[i],"--allowallMQ") == 0 ){
+	//     allowallMQ     =true;
+	//     continue;
+	// }
 
 	cerr<<"Wrong option "<<argv[i]<<endl;
 	return 1;
@@ -126,13 +128,13 @@ int main (int argc, char *argv[]) {
     filtersVCF= new SetVCFFilters (minGQcutoff          ,
 				   minMQcutoff          ,
 				   minMapabilitycutoff  ,
-				   !allowCloseIndelProx ,
-				   !allowRepeatMasking  ,
-				   !allowSysErr         ,
+				   filterCloseIndelProx ,
+				   filterRepeatMasking  ,
+				   filterSysErr         ,
 				   minCovcutoff      ,
 				   maxCovcutoff  ,
-				   allowall,
-				   allowallMQ);
+				   false,
+				   false);
     VCFreader vcfr (string(argv[argc-1]),5);
 	// 75060,
 	// 75070,

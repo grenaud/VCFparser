@@ -27,9 +27,13 @@ class ReadTabix{
 
  public:
     ReadTabix(string file,string indexForFile,string chrName,int start,int end);
+    ReadTabix(string file,string indexForFile,string chrName);
+
     ~ReadTabix();
     bool readLine(string & line);
     void repositionIterator(string chrName,int start,int end);
+    void repositionIterator(string chrName);
+
     string getHeader();
     
 };
